@@ -113,11 +113,12 @@ def read_in_finance(boros, years, data_dir = "data/finance_sales"):
     # Create an empty dataframe to store data as we iterate
     finance = pd.DataFrame()
     for year in years:
-    for borough in boros:
-        boro_year = read_in_boro_year_data(borough, year, data_dir)
-        boro_year = add_BBL_and_price_per_ft(boro_year)
-        # Append new rows to existing dataframe
-        finance = finance.append(boro_year)
+        for borough in boros:
+            print("Pulling Finance data for {}_{}".format(year, borough))
+            boro_year = read_in_boro_year_data(borough, year, data_dir)
+            boro_year = add_BBL_and_price_per_ft(boro_year)
+            # Append new rows to existing dataframe
+            finance = finance.append(boro_year)
     return finance
 
 
@@ -152,16 +153,19 @@ def main():
         help="Adds a year to the list of years to pull sales data for")
     parser.add_argument("--borough", dest="boros", nargs="*",
         help="Adds a borough to the list to pull sales/pluto data for")
-    parser.set_defaults(years = [2014,2015],
-        boros = ["brooklyn, manhattan"])
+    parser.set_defaults(years = [2014, 2015],
+        boros = ["brooklyn", "manhattan"])
     args = parser.parse_args()
     years, boros = args.years, args.boros
 
     # Convert to lowercase and remove spaces in borough names
-    boros = ["".join(boro.lower().split())]
+    boros = ["".join(boro.lower().split()) for boro in boros]
 
+    print("Getting PLUTO data for: {}".format(boros))
     pluto = read_in_pluto(boros)
+    print("Getting Finance data for: {} and {}".format(boros, years))
     finance = read_in_finance(boros, years)
+    print("Merging and outputting data")
     buildings = merge_pluto_finance(pluto, finance, boros, years)
 
 
