@@ -29,3 +29,4 @@ done
 
 cd ../..
 source rename_sales_data.sh
+mkdir -p data/merged
