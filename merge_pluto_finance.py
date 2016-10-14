@@ -150,9 +150,9 @@ def main():
     parser = ArgumentParser(description =
         "Subset the PLUTO and Dept of Finance data to be merged")
     parser.add_argument("--year", dest="years", nargs="*",
-        help="Adds a year to the list of years to pull sales data for")
+        help="Adds a year to the list of years to pull sales data for. Possible years include 2003-2016 (2016 is rolling data through September).")
     parser.add_argument("--borough", dest="boros", nargs="*",
-        help="Adds a borough to the list to pull sales/pluto data for")
+        help="Adds a borough to the list to pull sales/pluto data for. Possible boroughs include Brooklyn, Bronx, StatenIsland (as 1 or 2 words, or SI), Queens, and Manhattan. Not case sensitive.")
     parser.set_defaults(years = [2014, 2015],
         boros = ["brooklyn", "manhattan"])
     args = parser.parse_args()
