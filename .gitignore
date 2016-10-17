@@ -2,3 +2,4 @@ data/*
 pyproj/*
 .DS_Store
 .ipynb_checkpoints/*
+dbfpy*
