@@ -137,7 +137,7 @@ def merge_pluto_finance(pluto, finance, boros, years,
      Returns:
         Pandas DataFrame
     """
-    buildings = pd.merge(pluto, finance, how='outer', on='bbl')
+    buildings = pd.merge(pluto, finance, how='right', on='bbl')
     output = "{output_dir}/{boros_joined}_{min_year}_{max_year}.csv".format(
         boros_joined = "_".join(boros), min_year = min(years),
         max_year = max(years), output_dir = output_dir)
