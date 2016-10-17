@@ -139,8 +139,8 @@ def read_in_dtm(boros, data_dir='data/dtm', filename='DTM_0316_Condo_Units.csv')
     Returns:
         Pandas DataFrame
     """
-    columns = ['CONDO_BORO', 'CONDO_NUMB', 'UNIT_BORO', 'UNIT_BLOCK',
-               'UNIT_LOT', 'UNIT_BBL']
+    columns = ['CONDO_BORO', 'CONDO_NUMB', 'UNIT_BLOCK',
+               'UNIT_LOT', 'UNIT_BBL', 'UNIT_DESIG']
     boro_names = ['manhattan', 'bronx', 'brooklyn', 'queens', 'statenisland']
     boro_codes = dict(zip(boro_names, range(1,6)))
     dtm = pd.read_csv('{}/{}'.format(data_dir, filename), usecols=columns)
