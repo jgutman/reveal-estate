@@ -11,9 +11,9 @@
     * Run `python dbf2csv.py ../data/Digital_Tax_Map_shapefile_03-16/DTM_0316_Condo_Units.dbf`
     * Move the newly created .csv files to the `data/dtm` directory.
 * To compare PLUTO Borough-Block-Lot numbers to Department of Finance Borough-Block-Lot numbers, refer to the columns in `DTM_0316_Condo_Units.csv`:  
-    * CONDO_BORO
-    * CONDO_NUMB
-    * UNIT_BORO
-    * UNIT_BLOCK
-    * UNIT_LOT
-    * UNIT_BBL
+    * CONDO_BORO (corresponds to finance["Borough"] and pluto["BoroCode"])
+    * CONDO_NUMB (corresponds to pluto["CondoNo"])
+    * UNIT_BLOCK (corresponds to finance["Block"])
+    * UNIT_LOT (corresponds to finance["Lot"])
+    * UNIT_BBL (corresponds to finance["Borough" + "Block" + "Lot"])
+    * UNIT_DESIG (corresponds to finance["Apartment Number"])

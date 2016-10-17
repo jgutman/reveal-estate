@@ -30,6 +30,8 @@ do # download 2003-2006 data
   done
 done
 
+curl -o ./data_dictionary.pdf "https://www1.nyc.gov/assets/finance/downloads/pdf/07pdf/glossary_rsf071607.pdf"
+
 cd ../..
 # run script to rename files in a uniform standard
 source rename_sales_data.sh
