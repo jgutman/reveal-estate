@@ -17,5 +17,6 @@
     * UNIT_LOT (corresponds to finance["Lot"])
     * UNIT_BBL (corresponds to finance["Borough" + "Block" + "Lot"])
     * UNIT_DESIG (corresponds to finance["Apartment Number"])
-* Where pluto["CondoNo"] > 0, Lot pluto["Lot"] and pluto["BBL"] will not match finance["Lot"] and finance["BBL"].
-    * One PLUTO record (the entire building) may correspond to many Department of Finance sales records (each condominium unit in that building)
+* Where pluto["CondoNo"] > 0, pluto["Lot"] and pluto["BBL"] will not match finance["Lot"] and finance["BBL"].
+    * One PLUTO record (the entire building) may correspond to many Department of Finance sales records (each condominium unit in that building).
+    * Pluto Condo Lot numbers nearly always start with 75xx.
