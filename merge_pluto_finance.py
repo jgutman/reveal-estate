@@ -149,6 +149,21 @@ def read_in_dtm(boros, data_dir='data/dtm', filename='DTM_0316_Condo_Units.csv')
     return dtm
 
 
+def get_finance_condo_lot(finance, dtm, pluto):
+    """
+
+    """
+    finance_condos_only = pd.merge(finance, dtm, how='right',
+        left_on=['bbl'], right_on=['unit_bbl'],
+        suffixes=['_finance', '_dtm'])
+    print(finance_condos_only.columns)
+    finance_condos_only = pd.merge(pluto, finance_condos_only, how='right',
+        left_on=['borocode', 'condono'], right_on=['condo_boro', 'condo_numb'],
+        suffixes=['_pluto', '_finance'])
+    print(finance_condos_only.columns)
+    return finance_condo_updated
+
+
 def merge_pluto_finance(pluto, finance, dtm, boros, years,
     output_dir = "data/merged"):
     """
@@ -166,11 +181,10 @@ def merge_pluto_finance(pluto, finance, dtm, boros, years,
      Returns:
         Pandas DataFrame
     """
-    # First convert pluto BBL to unit BBL using DTM condo unit data
-    pluto_condo_updated = pd.merge(pluto, dtm, how = 'left',
-        left_on = ['borocode', ], right_on = ['condo_boro'])
+    # First search for finance sales data that matches dtm condo data
+    finance_condo_updated = get_finance_condo_lot(finance, dtm, pluto)
 
-    buildings = pd.merge(pluto_condo_updated, finance, how='right', on='bbl',
+    buildings = pd.merge(pluto, finance_condo_updated, how='right', on='bbl',
         suffixes=['_pluto', '_finance'])
     output = "{output_dir}/{boros_joined}_{min_year}_{max_year}.csv".format(
         boros_joined = "_".join(boros), min_year = min(years),
