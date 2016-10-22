@@ -169,14 +169,19 @@ def get_finance_condo_lot(pluto, finance, dtm):
     dtm_cols_to_keep = ['unit_bbl', 'condo_boro', 'condo_numb']
     pluto_cols_to_keep = ['bbl', 'block', 'borocode', 'condono']
 
+    print("Finance:{} DTM:{}".format(finance.shape, dtm.shape))
     finance_condos_only = pd.merge(finance, dtm[dtm_cols_to_keep],
         how='inner', left_on=['bbl'], right_on=['unit_bbl'])
 
+    print("Finance intermediate:{} PLUTO:{}".format(finance_condos_only.shape,
+        pluto.shape))
     finance_condos_only = pd.merge(pluto[pluto_cols_to_keep],
         finance_condos_only, how='inner',
         left_on=['borocode', 'block', 'condono'],
         right_on=['condo_boro', 'block', 'condo_numb'],
         suffixes=['_pluto', '_finance'])
+    print("Finance intermediate (all condos): {}".format(
+        finance_condos_only.shape))
 
     finance_condo_updated = pd.merge(finance,
         finance_condos_only[['bbl_pluto', 'unit_bbl']],
@@ -203,15 +208,23 @@ def merge_pluto_finance(pluto, finance, dtm, boros, years,
         Pandas DataFrame
     """
     # First search for finance sales data that matches dtm condo data
-    finance_condo_updated = get_finance_condo_lot(finance, dtm, pluto)
+    print("Updating lot numbers for condo units")
+    print("Finance:{} PLUTO:{} DTM:{}".format(finance.shape,
+        pluto.shape, dtm.shape))
+    finance_condo_updated = get_finance_condo_lot(pluto = pluto,
+        finance = finance, dtm = dtm)
+    print("Finance updated:{}".format(finance_condo_updated.shape))
 
+    print("Merging PLUTO with updated Dept. of Finance data")
     buildings = pd.merge(pluto, finance_condo_updated, how='right',
         left_on='bbl', right_on = 'bbl_pluto',
         suffixes=['_pluto', '_finance'])
     output = "{output_dir}/{boros_joined}_{min_year}_{max_year}.csv".format(
         boros_joined = "_".join(boros), min_year = min(years),
         max_year = max(years), output_dir = output_dir)
-    buildings.to_csv(output, index = False)
+    print(buildings.shape)
+    print("Writing output to file in {}".format(output))
+    buildings.to_csv(output, index = False, chunksize=1e4)
     return buildings
 
 
