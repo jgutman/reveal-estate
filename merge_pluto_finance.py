@@ -36,7 +36,10 @@ def read_in_boro_year_data(boro, year, data_dir = "data/finance_sales"):
     skip_rows = 4 if year > 2010 else 3
     data = pd.read_excel(filename, skiprows = skip_rows)
     # Remove newline characters from column headers
-    data.columns = [col.strip().lower() for col in data.columns]
+    # Convert column names to lowercase
+    # Replaces spaces in column names with underscores
+    data.columns = [col.strip().lower().replace(" ", "_")
+            for col in data.columns]
     return data
 
 
@@ -64,14 +67,22 @@ def add_BBL_and_price_per_ft(data, copy = True):
     bbl_columns = data[["borough", "block", "lot"]].itertuples()
     bbl_formatted = pd.Series(["%01d%05d%04d" % (row.borough, row.block,
         row.lot) for row in bbl_columns], dtype='int64')
-    processed_data = processed_data[processed_data["sale price"] > 0]
+    processed_data = processed_data[processed_data["sale_price"] > 0]
     processed_data["bbl"] = bbl_formatted
+
+    # Remove duplicate bbls by returning only the most recent sales data
+    # for each BBL and year
+    processed_data["sale_year"] = [d.year for d in processed_data.sale_date]
+    max_idx_by_bbl = processed_data.groupby([
+        'bbl', 'sale_year'])['sale_date'].idxmax()
+    processed_data = processed_data.loc[max_idx_by_bbl]
+
     # Use the larger: gross sqft or land sqft, gross sqft may be zero sometimes
-    processed_data["price per sqft"] = data["sale price"].astype('float64') / data[[
-        "gross square feet", "land square feet"]].max(axis=1)
+    #processed_data["price per sqft"] = data["sale price"].astype('float64'
+    #       ) / data[["gross square feet", "land square feet"]].max(axis=1)
     # Replace 0s and infinity with NaN for clarity
-    processed_data = processed_data.replace(
-        {'price per sqft': {0: np.nan, np.inf: np.nan}})
+    #processed_data = processed_data.replace(
+    #       {'price per sqft': {0: np.nan, np.inf: np.nan}})
     return processed_data
 
 
