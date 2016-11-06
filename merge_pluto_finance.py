@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import pandas as pd
 import numpy as np
+from convert_xy import convert_df
 
 def read_in_boro_year_data(boro, year, data_dir = "data/finance_sales"):
     """
@@ -111,6 +112,8 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
         data.columns = [col.strip().lower() for col in data.columns]
         # Append new rows to existing dataframe
         pluto = pluto.append(data)
+    # Convert xcoord and ycoord columns to latitude and longitudes
+    pluto = convert_df(pluto, "xcoord", "ycoord")
     return pluto
 
 
