@@ -48,7 +48,7 @@ def add_BBL(data, copy = True):
     """
     Takes a raw dataframe and adds the BBL code (Borough, Block, Lot)
     Args:
-        Pandas DataFrame data: raw data frame to append the "bbl" and 
+        Pandas DataFrame data: raw data frame to append the "bbl" and
         boolean copy: whether to make a copy or alter the dataframe in place
     Returns:
         Pandas DataFrame
@@ -101,25 +101,32 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
         data.columns = [col.strip().lower() for col in data.columns]
         # Append new rows to existing dataframe
         pluto = pluto.append(data)
-        columns_to_remove = ['block', 'lot','zonedist1','zonedist2', 'zonedist3', 'zonedist4', 'overlay1', 'overlay2',
-        'spdist1', 'spdist2', 'allzoning1', 'allzoning2','ownername', 'lotarea', 'bldgarea', 
-        'officearea', 'retailarea', 'garagearea', 'strgearea', 'factryarea','otherarea', 'areasource',
-        'assessland', 'assesstot', 'exemptland', 'exempttot','builtfar', 'residfar', 'commfar', 'facilfar',
-        'zmcode','sanborn', 'taxmap', 'edesignum', 'appbbl', 'appdate', 'plutomapid','address','borocode','version',
-        'ct2010','cb2010','sanitboro','tract2010', 'cd','firecomp','policeprct','healtharea',
+
+    columns_to_remove = ['block', 'lot', 'zonedist1','zonedist2', 'zonedist3',
+        'zonedist4', 'overlay1', 'overlay2', 'spdist1', 'spdist2',
+        'allzoning1', 'allzoning2','ownername', 'lotarea', 'bldgarea',
+        'officearea', 'retailarea', 'garagearea', 'strgearea', 'factryarea',
+        'otherarea', 'areasource', 'assessland', 'assesstot', 'exemptland',
+        'exempttot','builtfar', 'residfar', 'commfar', 'facilfar',
+        'zmcode','sanborn', 'taxmap', 'edesignum', 'appbbl', 'appdate',
+        'plutomapid','address','borocode','version', 'ct2010', 'cb2010',
+        'sanitboro','tract2010', 'cd','firecomp','policeprct','healtharea',
         'sanitdistrict','sanitsub']
-    for col in columns_to_remove:
-        pluto = pluto.drop(col,axis=1)
+    pluto = pluto.drop(columns_to_remove,axis=1)
+
     # Convert xcoord and ycoord columns to latitude and longitudes
     pluto = convert_df(pluto, "xcoord", "ycoord")
+
     columns_to_float =['schooldist', 'council', 'zipcode','comarea', 'resarea',
-       'landuse', 'easements','numbldgs', 'numfloors', 'unitsres', 'unitstotal', 'lotfront',
-       'lotdepth', 'bldgfront', 'bldgdepth', 'proxcode','lottype', 'bsmtcode', 'yearbuilt',
-       'yearalter1', 'yearalter2', 'bbl','condono', 'xcoord', 'ycoord']
-    for col in columns_to_float:
-        pluto[col] = pluto[col].astype(float)
+       'landuse', 'easements','numbldgs', 'numfloors', 'unitsres',
+       'unitstotal', 'lotfront', 'lotdepth', 'bldgfront', 'bldgdepth',
+       'proxcode','lottype', 'bsmtcode', 'yearbuilt', 'yearalter1',
+       'yearalter2', 'bbl','condono', 'xcoord', 'ycoord']
+    pluto[columns_to_float] = pluto[columns_to_float].astype(float)
+
     pluto['gross_sqft_pluto'] = pluto['resarea'] + pluto['comarea']
     pluto = pluto[pluto['gross_sqft_pluto']!=0]
+
     BinaryDict = {'N': 0, 'Y': 1}
     # Split Zone Binary
     pluto.replace({"splitzone": BinaryDict},inplace=True)
@@ -143,7 +150,7 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
     pluto['garage'] = (pluto['ext']==('G' or 'EG'))*1
     pluto['extension'] = (pluto['ext']==('E' or 'EG'))*1
     pluto = pluto.drop('ext',axis=1)
-    # Count Alterations 
+    # Count Alterations
     pluto['yearalter1'] = (pluto['yearalter1'] > 0)*1
     pluto['yearalter2'] = (pluto['yearalter2'] > 0)*1
     pluto['countalter'] = pluto['yearalter1'] + pluto['yearalter2']
@@ -196,7 +203,9 @@ def read_in_finance(boros, years, data_dir = "data/finance_sales"):
             # Append new rows to existing dataframe
             finance = finance.append(boro_year)
             finance = finance.append(boro_year)
-            finance = finance[['sale_price','sale_date','tax_class_at_time_of_sale','year_built','residential_units', 'commercial_units', 'total_units']]
+    finance = finance[['sale_price', 'sale_date', 'tax_class_at_time_of_sale',
+            'year_built', 'residential_units', 'commercial_units',
+            'total_units']]
     return finance
 
 
@@ -329,4 +338,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
