@@ -64,6 +64,7 @@ def add_BBL_and_price_per_ft(data, copy = True):
     bbl_columns = data[["borough", "block", "lot"]].itertuples()
     bbl_formatted = pd.Series(["%01d%05d%04d" % (row.borough, row.block,
         row.lot) for row in bbl_columns], dtype='int64')
+    processed_data = processed_data[processed_data["sale price"] > 0]
     processed_data["bbl"] = bbl_formatted
     # Use the larger: gross sqft or land sqft, gross sqft may be zero sometimes
     processed_data["price per sqft"] = data["sale price"].astype('float64') / data[[
