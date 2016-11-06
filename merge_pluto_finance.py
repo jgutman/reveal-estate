@@ -65,6 +65,7 @@ def add_BBL(data, copy = True):
     bbl_formatted = pd.Series(["%01d%05d%04d" % (row.borough, row.block,
         row.lot) for row in bbl_columns], dtype='int64')
     processed_data["bbl"] = bbl_formatted
+    processed_data = processed_data.drop(['block','lot','borough'], axis=1)
 
     # Remove duplicate bbls by returning only the most recent sales data
     # for each BBL and year
@@ -195,7 +196,7 @@ def read_in_finance(boros, years, data_dir = "data/finance_sales"):
             # Append new rows to existing dataframe
             finance = finance.append(boro_year)
             finance = finance.append(boro_year)
-            finance = finance[['borough','sale_price','sale_date','block','lot','tax_class_at_time_of_sale','year_built','residential_units', 'commercial_units', 'total_units']]
+            finance = finance[['sale_price','sale_date','tax_class_at_time_of_sale','year_built','residential_units', 'commercial_units', 'total_units']]
     return finance
 
 
