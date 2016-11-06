@@ -44,15 +44,11 @@ def read_in_boro_year_data(boro, year, data_dir = "data/finance_sales"):
     return data
 
 
-def add_BBL_and_price_per_ft(data, copy = True):
+def add_BBL(data, copy = True):
     """
-    Takes a raw dataframe and adds the BBL code (Borough, Block, Lot), and
-    price per square foot. Uses same 10-digit BBL format as PLUTO:
-    1 digit for Borough, 5 digits for Block, 4 digits for Lot.
-
+    Takes a raw dataframe and adds the BBL code (Borough, Block, Lot)
     Args:
-        Pandas DataFrame data: raw data frame to append the "bbl" and "price
-            per sqft" columns to
+        Pandas DataFrame data: raw data frame to append the "bbl" and 
         boolean copy: whether to make a copy or alter the dataframe in place
     Returns:
         Pandas DataFrame
@@ -68,7 +64,6 @@ def add_BBL_and_price_per_ft(data, copy = True):
     bbl_columns = data[["borough", "block", "lot"]].itertuples()
     bbl_formatted = pd.Series(["%01d%05d%04d" % (row.borough, row.block,
         row.lot) for row in bbl_columns], dtype='int64')
-    processed_data = processed_data[processed_data["sale_price"] > 0]
     processed_data["bbl"] = bbl_formatted
 
     # Remove duplicate bbls by returning only the most recent sales data
@@ -77,13 +72,6 @@ def add_BBL_and_price_per_ft(data, copy = True):
     max_idx_by_bbl = processed_data.groupby([
         'bbl', 'sale_year'])['sale_date'].idxmax()
     processed_data = processed_data.loc[max_idx_by_bbl]
-
-    # Use the larger: gross sqft or land sqft, gross sqft may be zero sometimes
-    #processed_data["price per sqft"] = data["sale price"].astype('float64'
-    #       ) / data[["gross square feet", "land square feet"]].max(axis=1)
-    # Replace 0s and infinity with NaN for clarity
-    #processed_data = processed_data.replace(
-    #       {'price per sqft': {0: np.nan, np.inf: np.nan}})
     return processed_data
 
 
@@ -112,8 +100,75 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
         data.columns = [col.strip().lower() for col in data.columns]
         # Append new rows to existing dataframe
         pluto = pluto.append(data)
+        columns_to_remove = ['block', 'lot','zonedist1','zonedist2', 'zonedist3', 'zonedist4', 'overlay1', 'overlay2',
+        'spdist1', 'spdist2', 'allzoning1', 'allzoning2','ownername', 'lotarea', 'bldgarea', 
+        'officearea', 'retailarea', 'garagearea', 'strgearea', 'factryarea','otherarea', 'areasource',
+        'assessland', 'assesstot', 'exemptland', 'exempttot','builtfar', 'residfar', 'commfar', 'facilfar',
+        'zmcode','sanborn', 'taxmap', 'edesignum', 'appbbl', 'appdate', 'plutomapid','address','borocode','version',
+        'ct2010','cb2010','sanitboro','tract2010', 'cd','firecomp','policeprct','healtharea',
+        'sanitdistrict','sanitsub']
+    for col in columns_to_remove:
+        pluto = pluto.drop(col,axis=1)
     # Convert xcoord and ycoord columns to latitude and longitudes
     pluto = convert_df(pluto, "xcoord", "ycoord")
+    columns_to_float =['schooldist', 'council', 'zipcode','comarea', 'resarea',
+       'landuse', 'easements','numbldgs', 'numfloors', 'unitsres', 'unitstotal', 'lotfront',
+       'lotdepth', 'bldgfront', 'bldgdepth', 'proxcode','lottype', 'bsmtcode', 'yearbuilt',
+       'yearalter1', 'yearalter2', 'bbl','condono', 'xcoord', 'ycoord']
+    for col in columns_to_float:
+        pluto[col] = pluto[col].astype(float)
+    pluto['gross_sqft_pluto'] = pluto['resarea'] + pluto['comarea']
+    pluto = pluto[pluto['gross_sqft_pluto']!=0]
+    BinaryDict = {'N': 0, 'Y': 1}
+    # Split Zone Binary
+    pluto.replace({"splitzone": BinaryDict},inplace=True)
+    # IrrLotCode Binary
+    pluto.replace({"irrlotcode": BinaryDict},inplace=True)
+    # Limited Height Binary
+    LtdHeightDict = {'LH-1': 1, 'LH-1A': 1}
+    pluto.replace({"ltdheight": LtdHeightDict},inplace=True)
+    pluto['ltdheight'].fillna(value=0,inplace=True)
+    # BuiltCode Binary
+    BuiltCodeDict = {'E': 1}
+    pluto.replace({"builtcode": BuiltCodeDict},inplace=True)
+    pluto['builtcode'].fillna(value=0,inplace=True)
+    # Hist Dist Binary
+    pluto['histdist'] = (pluto['histdist'].notnull())*1
+    pluto['histdist'].fillna(value=0,inplace=True)
+    # Landmark
+    pluto['landmark'] = (pluto['landmark'].notnull())*1
+    pluto['landmark'].fillna(value=0,inplace=True)
+    # Ext New Columns
+    pluto['garage'] = (pluto['ext']==('G' or 'EG'))*1
+    pluto['extension'] = (pluto['ext']==('E' or 'EG'))*1
+    pluto = pluto.drop('ext',axis=1)
+    # Count Alterations 
+    pluto['yearalter1'] = (pluto['yearalter1'] > 0)*1
+    pluto['yearalter2'] = (pluto['yearalter2'] > 0)*1
+    pluto['countalter'] = pluto['yearalter1'] + pluto['yearalter2']
+    pluto = pluto.drop('yearalter1',axis=1)
+    pluto = pluto.drop('yearalter2',axis=1)
+    # Round NumFloors and Log
+    pluto['numfloors'] = pluto['numfloors'].astype(float).round()
+    # Easements Binary
+    pluto['easements'] = (pluto['easements']>0)*1
+    # ProxCode set NaN
+    pluto['proxcode'] = pluto['proxcode'].replace(0,np.nan)
+    # BsmtCode Binary
+    pluto['bsmtcode'] = pluto['bsmtcode'].replace(5,np.nan)
+    pluto['bsmtcode'] = (pluto['bsmtcode'] > 0)*1
+    # Limit NumBldgs
+    pluto['numbldgs'] = ((pluto['numbldgs']<10)*1).replace(0,np.nan)* pluto['numbldgs']
+    # Limit Front and Depth
+    pluto['lotfront'] = ((pluto['lotfront']<100)*1).replace(0,np.nan)* pluto['lotfront']
+    pluto['lotdepth'] = ((pluto['lotdepth']<200)*1).replace(0,np.nan)* pluto['lotdepth']
+    pluto['bldgfront'] = ((pluto['bldgfront']<100)*1).replace(0,np.nan)* pluto['bldgfront']
+    pluto['bldgdepth'] = ((pluto['bldgdepth']<200)*1).replace(0,np.nan)* pluto['bldgdepth']
+    # Fix impossible years
+    pluto['yearbuilt'] = ((pluto['yearbuilt']<2016)*1).replace(0,np.nan)* pluto['yearbuilt']
+    # Limit UnitRes and UnitsTotal
+    pluto['unitsres'] = ((pluto['unitsres']<100)*1).replace(0,np.nan)* pluto['unitsres']
+    pluto['unitstotal'] = ((pluto['unitstotal']<100)*1).replace(0,np.nan)* pluto['unitstotal']
     return pluto
 
 
@@ -136,9 +191,11 @@ def read_in_finance(boros, years, data_dir = "data/finance_sales"):
         for borough in boros:
             print("Pulling Finance data for {}_{}".format(year, borough))
             boro_year = read_in_boro_year_data(borough, year, data_dir)
-            boro_year = add_BBL_and_price_per_ft(boro_year)
+            boro_year = add_BBL(boro_year)
             # Append new rows to existing dataframe
             finance = finance.append(boro_year)
+            finance = finance.append(boro_year)
+            finance = finance[['borough','sale_price','sale_date','block','lot','tax_class_at_time_of_sale','year_built','residential_units', 'commercial_units', 'total_units']]
     return finance
 
 
@@ -271,3 +328,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
