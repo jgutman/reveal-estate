@@ -3,3 +3,4 @@ pyproj/*
 .DS_Store
 .ipynb_checkpoints/*
 dbfpy*
+__pycache__/*
