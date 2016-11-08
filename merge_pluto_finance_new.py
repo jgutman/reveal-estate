@@ -129,9 +129,9 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
     # IrrLotCode Binary
     pluto.replace({"irrlotcode": BinaryDict},inplace=True)
     # Limited Height Binary
-    LtdHeightDict = {'LH-1': 1, 'LH-1A': 1}
+    pluto['ltdheight'] = pluto['ltdheight'].fillna(str(0))
+    LtdHeightDict = {'LH-1': 1, 'LH-1A': 1, '0': 0}
     pluto.replace({"ltdheight": LtdHeightDict},inplace=True)
-    pluto['ltdheight'].fillna(value=0,inplace=True)
     # BuiltCode Binary
     BuiltCodeDict = {'E': 1}
     pluto.replace({"builtcode": BuiltCodeDict},inplace=True)
