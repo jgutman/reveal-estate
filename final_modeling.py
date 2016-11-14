@@ -8,6 +8,7 @@ from sklearn import cross_validation
 from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
 from argparse import ArgumentParser
+from final_data_clean import *
 
 import seaborn as sns
 sns.set(color_codes=True)
@@ -61,7 +62,11 @@ def fit_LR(X_train, X_test, y_train, y_test):
 def fit_RF(X_train, X_test, y_train, y_test):
     RF_reg_final = RandomForestRegressor(n_estimators=100, n_jobs = -1)
     RF_reg_final.fit(X_train, y_train)
+    predicted = RF_reg_final.predict(X_test)
+    percent_diff = 100*(np.abs(predicted - y_test).astype(float) / y_test)
+    acc = 100 * (sum(i < 10. for i in percent_diff)/ len(percent_diff))
     print('Mean squared error for Random Forest model: ', mean_squared_error(y_test, RF_reg_final.predict(X_test)))
+    print('\nAccuracy (within 10% of true value): ', acc)
     return RF_reg_final
 
 
@@ -76,14 +81,28 @@ def main():
     parser.add_argument("--model", dest="model_type", type = str,
         help="Defines the type of model to be built. Acceptable options include LR (linear regression) or RF (random forest). Not case sensitive")
     parser.add_argument("--data", dest="data_path",type = str,
-        help="Path to training and testing csv files, named data_train and data_test.")
+        help="Path to csv file on which you want to fit a model.")
     parser.set_defaults(model_type = 'lr',
-        data_path = "data/merged/")
+        data_path = "data/merged/bronx_2010_2010.csv")
     args = parser.parse_args()
     model_type, data_path = args.model_type, args.data_path
     model_type = model_type.lower()
-    data_train = pd.read_csv((data_path + "/data_train"))
-    data_test = pd.read_csv((data_path + "/data_test"))
+    output_dir = "data/merged"
+    print("Reading in data from %s" % data_path)
+    df = pd.read_csv(data_path, low_memory = True)
+    df = drop_cols(df, ['zonemap','sale_date','sale_price'])
+    data_train, data_test = split_data(df)
+    print("Cleaning data train and data test")
+    data_train, data_test = fill_na(data_train, data_test)
+    #print("Saving training data to %s/%s" % (output_dir, "data_train"))
+    #data_train.to_csv((output_dir + "/data_train"), index = False, chunksize=1e4)
+    #print("Saving test data to %s/%s" % (output_dir, "data_test"))
+    #data_test.to_csv((output_dir + "/data_test"), index = False, chunksize=1e4)
+    
+    
+  
+    #data_train = pd.read_csv((data_path + "/data_train"))
+    #data_test = pd.read_csv((data_path + "/data_test"))
     X_train, X_test, y_train, y_test = create_target_var(data_train, data_test, 'price_per_sqft')
     
     if model_type == 'lr':

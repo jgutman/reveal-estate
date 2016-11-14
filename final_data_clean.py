@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import math
 from sklearn import cross_validation
+from argparse import ArgumentParser
 
 '''
 Module to do final cleaning and train/test split of the data before modeling.
@@ -67,23 +68,6 @@ def fill_na(data_train, data_test):
 
 
 
-def main():
-    data_path = "data/merged/bronx_2010_2010.csv"
-    output_dir = "data/merged"
-    print("Reading in data from %s" % data_path)
-    df = pd.read_csv(data_path, low_memory = True, error_bad_lines=False)
-    df = drop_cols(df, ['zonemap','sale_date','sale_price'])
-    data_train, data_test = split_data(df)
-    print("Cleaning data train and data test")
-    data_train, data_test = fill_na(data_train, data_test)
-    print("Saving training data to %s/%s" % (output_dir, "data_train"))
-    data_train.to_csv((output_dir + "/data_train"), index = False, chunksize=1e4)
-    print("Saving test data to %s/%s" % (output_dir, "data_test"))
-    data_test.to_csv((output_dir + "/data_test"), index = False, chunksize=1e4)
-    
-if __name__ == '__main__':
-    main()    
-    
     
     
     

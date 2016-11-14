@@ -121,8 +121,9 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
         pluto[col] = pluto[col].astype(float)
     pluto['gross_sqft_pluto'] = pluto['resarea'] + pluto['comarea']
     pluto = pluto[pluto['gross_sqft_pluto']!=0]
-    #pluto = pluto.dropna(how = 'any', subset = ['gross_sqft_pluto'], axis=1)
     pluto = pluto[pluto['gross_sqft_pluto']!= np.nan]
+    #Building Class
+    pluto.replace([''])
     BinaryDict = {'N': 0, 'Y': 1}
     # Split Zone Binary
     pluto.replace({"splitzone": BinaryDict},inplace=True)
@@ -293,8 +294,8 @@ def merge_pluto_finance(pluto, finance, dtm):
         suffixes=['_pluto', '_finance'])
     buildings["price_per_sqft"] = buildings["sale_price"].astype('float64') / buildings["gross_sqft_pluto"]
     buildings = buildings.dropna(how = 'any',subset = ['price_per_sqft'])
-    bulidings = buildings.loc[buildings["price_per_sqft"] > 5]]
-    buildings = buildings.loc[buildings["price_per_sqft"] <= 5000]
+    buildings = buildings[buildings["price_per_sqft"] > 5]
+    buildings = buildings[buildings["price_per_sqft"] <= 5000]
     return buildings
 
 
