@@ -293,7 +293,8 @@ def merge_pluto_finance(pluto, finance, dtm):
         suffixes=['_pluto', '_finance'])
     buildings["price_per_sqft"] = buildings["sale_price"].astype('float64') / buildings["gross_sqft_pluto"]
     buildings = buildings.dropna(how = 'any',subset = ['price_per_sqft'])
-    bulidings = buildings[buildings["price_per_sqft"] != 0]
+    bulidings = buildings.loc[buildings["price_per_sqft"] > 5]]
+    buildings = buildings.loc[buildings["price_per_sqft"] <= 5000]
     return buildings
 
 
