@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 from convert_xy import convert_df
 import math
+import pandas as pd
+from scipy import spatial
 
 def read_in_boro_year_data(boro, year, data_dir = "data/finance_sales"):
     """
@@ -122,8 +124,6 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
     pluto['gross_sqft_pluto'] = pluto['resarea'] + pluto['comarea']
     pluto = pluto[pluto['gross_sqft_pluto']!=0]
     pluto = pluto[pluto['gross_sqft_pluto']!= np.nan]
-    #Building Class
-    pluto.replace([''])
     BinaryDict = {'N': 0, 'Y': 1}
     # Split Zone Binary
     pluto.replace({"splitzone": BinaryDict},inplace=True)
@@ -268,6 +268,38 @@ def get_finance_condo_lot(pluto, finance, dtm):
     return finance_condo_updated
 
 
+def bbl_dist_to_subway(data):
+    # Subway Enterance Locations
+    subway = pd.read_csv('data/DOITT_SUBWAY_ENTRANCE_01_13SEPT2010.csv')
+    subway = subway.drop('NAME',1)
+    subway = subway.drop('URL',1)
+    subway = subway.drop('LINE',1)
+    subway['latitude'] = ''
+    subway['longitude'] = ''
+    for i in subway.index:
+        temp = str(subway['the_geom'][i])
+        temp = str.strip(temp, 'POINT (')
+        temp = str.strip(temp, ')')
+        temp = temp.split()
+        subway['latitude'][i] = temp[1]
+        subway['longitude'][i] = temp[0]
+    subway = subway.drop('the_geom',1)
+    subway = subway[['latitude', 'longitude']]
+    subway = subway.convert_objects(convert_numeric=True)#
+    subway.head()
+
+    subway_loc_matrix = subway.values.tolist()
+    
+    dist_list = []
+    for i in data.index:
+        bbl_coord = (data['latitude'][i],data['longitude'][i])
+        distance,index = spatial.KDTree(subway_loc_matrix).query(bbl_coord)
+        dist_list = dist_list + [distance]
+    data['subwaydist'] = dist_list
+    return data
+
+
+
 def merge_pluto_finance(pluto, finance, dtm):
     """
     Performs an outer join on PLUTO and Dept of Finance data using BBL as the
@@ -354,6 +386,8 @@ def remove_columns(dataframe, columns):
         Returns: Pandas dataframe
     """
     return dataframe.drop(columns, axis = 1)
+
+
                 
 def main():
     # Set up input option parsing for years and boros to pull data for
@@ -381,6 +415,7 @@ def main():
     buildings = merge_pluto_finance(pluto, finance, dtm)
     final_cols_to_remove = ['bbl_pluto','bbl','borocode','unit_bbl','block']
     buildings = remove_columns(buildings, final_cols_to_remove)
+    buildings = bbl_dist_to_subway(buildings)
     cat_vars = ['borough','schooldist','council','bldgclass','landuse','ownertype','proxcode','lottype','tax_class_at_time_of_sale']
     buildings_with_cats = clean_categorical_vars(buildings, cat_vars, boros, years)
 
