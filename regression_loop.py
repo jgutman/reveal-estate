@@ -35,7 +35,8 @@ print('{:.2} seconds elapsed'.format(time.time() - self.tstart))
 
 def define_model_params():
     mods = {
-
+        'lr' = linear_model.LinearRegression(),
+        'rf' = RandomForestRegressor(n_estimators=100, n_jobs = -1)
     }
 
     params = {
@@ -62,3 +63,12 @@ def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
         validation set, (e.g. 'mse')
     """
     with Timer('model comparison loop') as qq:
+        for index, model in enumerate([mods[x] for x in models_to_run]):
+            model_name = models_to_run[index]
+            parameter_values = params[model_name]
+            for p in ParameterGrid(parameter_values):
+                with Timer(model_name) as t:
+                    model.set_params(**p)
+
+                    # cross_validation ?
+                    model.fit(X_train, y_train)
