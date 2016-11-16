@@ -56,7 +56,11 @@ def fit_LR(X_train, X_test, y_train, y_test):
     regr = linear_model.LinearRegression()
     regr.fit(X_train, y_train)
     mse = mean_squared_error(y_test, regr.predict(X_test))
+    predicted = regr.predict(X_test)
+    percent_diff = 100*(np.abs(predicted - y_test).astype(float) / y_test)
+    acc = 100 * (sum(i < 10. for i in percent_diff)/ len(percent_diff))
     print('Mean squared error for Linear Regression model: ', mse)
+    print('\nAccuracy (within 10% of true value): ', acc)
     return regr
 
 def fit_RF(X_train, X_test, y_train, y_test):
@@ -90,8 +94,9 @@ def main():
     output_dir = "data/merged"
     print("Reading in data from %s" % data_path)
     df = pd.read_csv(data_path, low_memory = True)
-    #drop columns that are not needed or are redundant 
+    #drop columns that are not needed or are redundant
     df = drop_cols(df, ['zonemap','sale_date','sale_price','year_built'])
+    print("Splitting data into training and test sets")
     data_train, data_test = split_data(df)
     print("Cleaning data train and data test")
     data_train, data_test = fill_na(data_train, data_test)
@@ -104,11 +109,13 @@ def main():
   
     #data_train = pd.read_csv((data_path + "/data_train"))
     #data_test = pd.read_csv((data_path + "/data_test"))
+    print("Creating target variable")
     X_train, X_test, y_train, y_test = create_target_var(data_train, data_test, 'price_per_sqft')
-    
     if model_type == 'lr':
+        print("Fitting Linear Regression model")
         linear_reg = fit_LR(X_train, X_test, y_train, y_test)
     elif model_type == 'rf':
+        print("Fitting Random Forest model")
         random_forest = fit_RF(X_train, X_test, y_train, y_test)
     else:
         print("Please enter a valid model name (LR for Linear Regression or RF for Random Forest.")

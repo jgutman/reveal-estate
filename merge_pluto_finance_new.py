@@ -201,6 +201,7 @@ def read_in_finance(boros, years, data_dir = "data/finance_sales"):
             finance = finance.append(boro_year)
             finance = finance.append(boro_year)
             finance = finance[['sale_price','sale_date','tax_class_at_time_of_sale','year_built','residential_units', 'commercial_units', 'total_units','block','bbl']]
+            finance = finance[finance['sale_price'] != 0]
     return finance
 
 
@@ -285,7 +286,7 @@ def bbl_dist_to_subway(data):
         subway['longitude'][i] = temp[0]
     subway = subway.drop('the_geom',1)
     subway = subway[['latitude', 'longitude']]
-    subway = subway.convert_objects(convert_numeric=True)#
+    subway = subway.convert_objects(convert_numeric=True)
     subway.head()
 
     subway_loc_matrix = subway.values.tolist()
@@ -326,8 +327,9 @@ def merge_pluto_finance(pluto, finance, dtm):
         suffixes=['_pluto', '_finance'])
     buildings["price_per_sqft"] = buildings["sale_price"].astype('float64') / buildings["gross_sqft_pluto"]
     buildings = buildings.dropna(how = 'any',subset = ['price_per_sqft'])
-    buildings = buildings[buildings["price_per_sqft"] > 5]
-    buildings = buildings[buildings["price_per_sqft"] <= 5000]
+    buildings = buildings[buildings["price_per_sqft"] != 0.0]
+    #buildings = buildings[buildings["price_per_sqft"] > 5]
+    #buildings = buildings[buildings["price_per_sqft"] <= 5000]
     return buildings
 
 
@@ -413,9 +415,10 @@ def main():
     dtm = read_in_dtm(boros)
     print("Merging and outputting data")
     buildings = merge_pluto_finance(pluto, finance, dtm)
+    buildings[['bbl_pluto', 'latitude','longitude']].to_csv("columns_for_subway_merge.csv")
     final_cols_to_remove = ['bbl_pluto','bbl','borocode','unit_bbl','block']
     buildings = remove_columns(buildings, final_cols_to_remove)
-    buildings = bbl_dist_to_subway(buildings)
+    #buildings = bbl_dist_to_subway(buildings)
     cat_vars = ['borough','schooldist','council','bldgclass','landuse','ownertype','proxcode','lottype','tax_class_at_time_of_sale']
     buildings_with_cats = clean_categorical_vars(buildings, cat_vars, boros, years)
 
