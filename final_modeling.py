@@ -98,7 +98,7 @@ def main():
     df = drop_cols(df, ['zonemap','sale_date','sale_price','year_built'])
     print("Splitting data into training and test sets")
     data_train, data_test = split_data(df)
-    print("Cleaning data train and data test")
+    print("Cleaning data train and data test: %s, %s" % (data_train.shape, data_test.shape))
     data_train, data_test = fill_na(data_train, data_test)
     #print("Saving training data to %s/%s" % (output_dir, "data_train"))
     #data_train.to_csv((output_dir + "/data_train"), index = False, chunksize=1e4)
