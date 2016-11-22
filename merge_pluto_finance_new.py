@@ -51,7 +51,7 @@ def add_BBL(data, copy = True):
     """
     Takes a raw dataframe and adds the BBL code (Borough, Block, Lot)
     Args:
-        Pandas DataFrame data: raw data frame to append the "bbl" and 
+        Pandas DataFrame data: raw data frame to append the "bbl" and
         boolean copy: whether to make a copy or alter the dataframe in place
     Returns:
         Pandas DataFrame
@@ -73,7 +73,7 @@ def add_BBL(data, copy = True):
     # for each BBL and year
     processed_data["sale_year"] = [d.year for d in processed_data.sale_date]
     max_idx_by_bbl = processed_data.groupby([
-        'bbl', 'sale_year'])['sale_date'].idxmax()
+        'bbl', 'sale_year'])['sale_price'].idxmax()
     processed_data = processed_data.loc[max_idx_by_bbl]
     return processed_data
 
@@ -96,6 +96,7 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
 
     # Create an empty dataframe to store data as we iterate
     pluto = pd.DataFrame()
+
     for borough in boros:
         filename = "{data_dir}/{boro}.csv".format(data_dir = data_dir,
             boro = initials.get(borough))
@@ -105,12 +106,13 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
         pluto = pluto.append(data)
         #Need to keep 'borocode', 'block' for dtm merge, but remove the rest of unneeded columns
         columns_to_remove = ['lot','zonedist1','zonedist2', 'zonedist3', 'zonedist4', 'overlay1', 'overlay2',
-        'spdist1', 'spdist2', 'allzoning1', 'allzoning2','ownername', 'lotarea', 'bldgarea', 
+        'spdist1', 'spdist2', 'allzoning1', 'allzoning2','ownername', 'lotarea', 'bldgarea',
         'officearea', 'retailarea', 'garagearea', 'strgearea', 'factryarea','otherarea', 'areasource',
         'assessland', 'assesstot', 'exemptland', 'exempttot','builtfar', 'residfar', 'commfar', 'facilfar',
         'zmcode','sanborn', 'taxmap', 'edesignum', 'appbbl', 'appdate', 'plutomapid','address','version',
         'ct2010','cb2010','sanitboro','tract2010', 'cd','firecomp','policeprct','healtharea',
         'sanitdistrict','sanitsub']
+
     for col in columns_to_remove:
         pluto = pluto.drop(col,axis=1)
     # Convert xcoord and ycoord columns to latitude and longitudes
@@ -119,6 +121,7 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
        'landuse', 'easements','numbldgs', 'numfloors', 'unitsres', 'unitstotal', 'lotfront',
        'lotdepth', 'bldgfront', 'bldgdepth', 'proxcode','lottype', 'bsmtcode', 'yearbuilt',
        'yearalter1', 'yearalter2', 'bbl','condono', 'xcoord', 'ycoord']
+
     for col in columns_to_float:
         pluto[col] = pluto[col].astype(float)
     pluto['gross_sqft_pluto'] = pluto['resarea'] + pluto['comarea']
@@ -147,7 +150,7 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
     pluto['garage'] = (pluto['ext']==('G' or 'EG'))*1
     pluto['extension'] = (pluto['ext']==('E' or 'EG'))*1
     pluto = pluto.drop('ext',axis=1)
-    # Count Alterations 
+    # Count Alterations
     pluto['yearalter1'] = (pluto['yearalter1'] > 0)*1
     pluto['yearalter2'] = (pluto['yearalter2'] > 0)*1
     pluto['countalter'] = pluto['yearalter1'] + pluto['yearalter2']
@@ -200,7 +203,9 @@ def read_in_finance(boros, years, data_dir = "data/finance_sales"):
             # Append new rows to existing dataframe
             finance = finance.append(boro_year)
             finance = finance.append(boro_year)
-            finance = finance[['sale_price','sale_date','tax_class_at_time_of_sale','year_built','residential_units', 'commercial_units', 'total_units','block','bbl']]
+            finance = finance[['sale_price','sale_date','tax_class_at_time_of_sale',
+                        'year_built','residential_units', 'commercial_units',
+                        'total_units','block','bbl']]
     return finance
 
 
@@ -264,7 +269,7 @@ def get_finance_condo_lot(pluto, finance, dtm):
         finance_condos_only[['bbl_pluto', 'unit_bbl']],
         how='left', left_on='bbl', right_on='unit_bbl')
     finance_condo_updated = finance_condo_updated.drop(['bbl','block'], axis=1)
-    
+
     return finance_condo_updated
 
 
@@ -289,7 +294,7 @@ def bbl_dist_to_subway(data):
     subway.head()
 
     subway_loc_matrix = subway.values.tolist()
-    
+
     dist_list = []
     for i in data.index:
         bbl_coord = (data['latitude'][i],data['longitude'][i])
@@ -310,7 +315,7 @@ def merge_pluto_finance(pluto, finance, dtm):
         Pandas DataFrame finance: contains finance data and "bbl" join key
         Pandas DataFrame dtm: contains "unit_bbl" and "condo_numb" for
             joining pluto and dept. of finance condo unit data
-        
+
         Pandas DataFrame
     """
     # First search for finance sales data that matches dtm condo data
@@ -333,13 +338,13 @@ def merge_pluto_finance(pluto, finance, dtm):
 
 def make_dummy_variables(dataframe, feature):
     """Creates dummy columns for a categorical variable in given Pandas dataframe.
-    
-        Args:  
+
+        Args:
             dataframe: Pandas dataframe.
             feature: a categorical variable.
         Returns: dummy variable columns for input feature.
             """
- 
+
     uniques = dataframe[feature].unique()
     lst = list(uniques)
     for x in lst:
@@ -360,8 +365,8 @@ def clean_categorical_vars(dataframe, list_of_cat_vars, boros, years, output_dir
             dataframe: Pandas dataframe.
             list (string) list_of_cat_vars: list of categorical column names
             list (string) boros: list of boros in dataframe.
-            list (int) years: list of years in dataframe. 
-            
+            list (int) years: list of years in dataframe.
+
     '''
     for column in dataframe.columns:
         if (np.any(dataframe[column].isnull())):
@@ -388,7 +393,7 @@ def remove_columns(dataframe, columns):
     return dataframe.drop(columns, axis = 1)
 
 
-                
+
 def main():
     # Set up input option parsing for years and boros to pull data for
     parser = ArgumentParser(description =
@@ -416,10 +421,9 @@ def main():
     final_cols_to_remove = ['bbl_pluto','bbl','borocode','unit_bbl','block']
     buildings = remove_columns(buildings, final_cols_to_remove)
     buildings = bbl_dist_to_subway(buildings)
-    cat_vars = ['borough','schooldist','council','bldgclass','landuse','ownertype','proxcode','lottype','tax_class_at_time_of_sale']
+    cat_vars = ['borough','schooldist','council','bldgclass','landuse','ownertype',
+                'proxcode','lottype','tax_class_at_time_of_sale']
     buildings_with_cats = clean_categorical_vars(buildings, cat_vars, boros, years)
 
 if __name__ == '__main__':
     main()
-
-
