@@ -264,7 +264,7 @@ def get_finance_condo_lot(pluto, finance, dtm):
     finance_condo_updated = pd.merge(finance,
         finance_condos_only[['bbl_pluto', 'unit_bbl']],
         how='left', left_on='bbl', right_on='unit_bbl')
-    finance_condo_updated = finance_condo_updated.drop(['bbl','block'], axis=1)
+    finance_condo_updated = finance_condo_updated.drop(['block','bbl'], axis=1)
     
     return finance_condo_updated
 
@@ -384,14 +384,17 @@ def main():
 
     print("Getting PLUTO data for: {}".format(boros))
     pluto = read_in_pluto(boros)
+    #pluto.to_csv("data/merged/pluto_manhattan_brooklyn_2014_2015.csv", index = False)
     print("Getting Finance data for: {} and {}".format(boros, years))
     finance = read_in_finance(boros, years)
+    #finance.to_csv("data/merged/finance_manhattan_brooklyn_2014_2015.csv", index = False)
     print("Getting DTM Condo Unit data for: {}".format(boros))
     dtm = read_in_dtm(boros)
     buildings = merge_pluto_finance(pluto, finance, dtm)
+    #buildings.to_csv("data/merged/manhattan_brooklyn_2014_2015.csv", index = False)
     print("Merging with subway data")
-    #buildings = bbl_dist_to_subway(buildings)
-    final_cols_to_remove = ['bbl_pluto','bbl','borocode','unit_bbl','block']
+    buildings = bbl_dist_to_subway(buildings)
+    final_cols_to_remove = ['borocode','unit_bbl','block','condono']
     buildings = remove_columns(buildings, final_cols_to_remove)
     cat_vars = ['borough','schooldist','council','bldgclass','landuse','ownertype','proxcode','lottype','tax_class_at_time_of_sale']
     buildings_with_cats = clean_categorical_vars(buildings, cat_vars, boros, years)
