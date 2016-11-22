@@ -384,17 +384,14 @@ def main():
 
     print("Getting PLUTO data for: {}".format(boros))
     pluto = read_in_pluto(boros)
-    #pluto.to_csv("data/merged/pluto_manhattan_brooklyn_2014_2015.csv", index = False)
     print("Getting Finance data for: {} and {}".format(boros, years))
     finance = read_in_finance(boros, years)
-    #finance.to_csv("data/merged/finance_manhattan_brooklyn_2014_2015.csv", index = False)
     print("Getting DTM Condo Unit data for: {}".format(boros))
     dtm = read_in_dtm(boros)
     buildings = merge_pluto_finance(pluto, finance, dtm)
-    #buildings.to_csv("data/merged/manhattan_brooklyn_2014_2015.csv", index = False)
     print("Merging with subway data")
     buildings = bbl_dist_to_subway(buildings)
-    final_cols_to_remove = ['borocode','unit_bbl','block','condono']
+    final_cols_to_remove = ['bbl_pluto','borocode','unit_bbl','block','condono']
     buildings = remove_columns(buildings, final_cols_to_remove)
     cat_vars = ['borough','schooldist','council','bldgclass','landuse','ownertype','proxcode','lottype','tax_class_at_time_of_sale']
     buildings_with_cats = clean_categorical_vars(buildings, cat_vars, boros, years)
