@@ -51,7 +51,7 @@ def add_BBL(data, copy = True):
     """
     Takes a raw dataframe and adds the BBL code (Borough, Block, Lot)
     Args:
-        Pandas DataFrame data: raw data frame to append the "bbl" and 
+        Pandas DataFrame data: raw data frame to append the "bbl" and
         boolean copy: whether to make a copy or alter the dataframe in place
     Returns:
         Pandas DataFrame
@@ -73,7 +73,7 @@ def add_BBL(data, copy = True):
     # for each BBL and year
     processed_data["sale_year"] = [d.year for d in processed_data.sale_date]
     max_idx_by_bbl = processed_data.groupby([
-        'bbl', 'sale_year'])['sale_date'].idxmax()
+        'bbl', 'sale_year'])['sale_price'].idxmax()
     processed_data = processed_data.loc[max_idx_by_bbl]
     return processed_data
 
@@ -96,63 +96,76 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
 
     # Create an empty dataframe to store data as we iterate
     pluto = pd.DataFrame()
-    for borough in boros:
+    for boro in boros:
+        if boro == "si":
+            boro = "statenisland"
+        assert(boro in initials.keys()), "inappropriate boro for data"
+
         filename = "{data_dir}/{boro}.csv".format(data_dir = data_dir,
-            boro = initials.get(borough))
+            boro = initials.get(boro))
         data = pd.read_csv(filename, low_memory = False)
         data.columns = [col.strip().lower() for col in data.columns]
         # Append new rows to existing dataframe
         pluto = pluto.append(data)
-        #Need to keep 'borocode', 'block' for dtm merge, but remove the rest of unneeded columns
-        columns_to_remove = ['lot','zonedist1','zonedist2', 'zonedist3', 'zonedist4', 'overlay1', 'overlay2',
-        'spdist1', 'spdist2', 'allzoning1', 'allzoning2','ownername', 'lotarea', 'bldgarea', 
-        'officearea', 'retailarea', 'garagearea', 'strgearea', 'factryarea','otherarea', 'areasource',
-        'assessland', 'assesstot', 'exemptland', 'exempttot','builtfar', 'residfar', 'commfar', 'facilfar',
-        'zmcode','sanborn', 'taxmap', 'edesignum', 'appbbl', 'appdate', 'plutomapid','address','version',
-        'ct2010','cb2010','sanitboro','tract2010', 'cd','firecomp','policeprct','healtharea',
-        'sanitdistrict','sanitsub']
-    for col in columns_to_remove:
-        pluto = pluto.drop(col,axis=1)
+
+    #Need to keep 'borocode', 'block' for dtm merge, but remove the rest of unneeded columns
+    columns_to_remove = ['lot', 'zonedist1','zonedist2', 'zonedist3',
+        'zonedist4', 'overlay1', 'overlay2', 'spdist1', 'spdist2',
+        'allzoning1', 'allzoning2','ownername', 'lotarea', 'bldgarea',
+        'officearea', 'retailarea', 'garagearea', 'strgearea', 'factryarea',
+        'otherarea', 'areasource', 'assessland', 'assesstot', 'exemptland',
+        'exempttot','builtfar', 'residfar', 'commfar', 'facilfar', 'zmcode',
+        'sanborn', 'taxmap', 'edesignum', 'appbbl', 'appdate', 'plutomapid',
+        'address', 'version', 'ct2010', 'cb2010', 'sanitboro', 'tract2010',
+        'cd','firecomp','policeprct','healtharea', 'sanitdistrict','sanitsub']
+    pluto = pluto.drop(columns_to_remove,axis=1)
+
     # Convert xcoord and ycoord columns to latitude and longitudes
     pluto = convert_df(pluto, "xcoord", "ycoord")
+
+    # Convert xcoord and ycoord columns to latitude and longitudes
+    pluto = convert_df(pluto, "xcoord", "ycoord")
+
     columns_to_float =['schooldist', 'council', 'zipcode','comarea', 'resarea',
-       'landuse', 'easements','numbldgs', 'numfloors', 'unitsres', 'unitstotal', 'lotfront',
-       'lotdepth', 'bldgfront', 'bldgdepth', 'proxcode','lottype', 'bsmtcode', 'yearbuilt',
-       'yearalter1', 'yearalter2', 'bbl','condono', 'xcoord', 'ycoord']
-    for col in columns_to_float:
-        pluto[col] = pluto[col].astype(float)
+       'landuse', 'easements','numbldgs', 'numfloors', 'unitsres',
+       'unitstotal', 'lotfront', 'lotdepth', 'bldgfront', 'bldgdepth',
+       'proxcode','lottype', 'bsmtcode', 'yearbuilt', 'yearalter1',
+       'yearalter2', 'bbl','condono', 'xcoord', 'ycoord']
+    pluto[columns_to_float] = pluto[columns_to_float].astype(float)
+
     pluto['gross_sqft_pluto'] = pluto['resarea'] + pluto['comarea']
-    pluto = pluto[pluto['gross_sqft_pluto']!=0]
-    pluto = pluto[pluto['gross_sqft_pluto']!= np.nan]
+    pluto = pluto[ pluto['gross_sqft_pluto'] != 0]
+    pluto = pluto[ pluto['gross_sqft_pluto'].notnull()]
+
     BinaryDict = {'N': 0, 'Y': 1}
-    # Split Zone Binary
-    pluto.replace({"splitzone": BinaryDict},inplace=True)
-    # IrrLotCode Binary
-    pluto.replace({"irrlotcode": BinaryDict},inplace=True)
-    # Limited Height Binary
-    pluto['ltdheight'] = pluto['ltdheight'].fillna(str(0))
-    LtdHeightDict = {'LH-1': 1, 'LH-1A': 1, '0': 0}
-    pluto.replace({"ltdheight": LtdHeightDict},inplace=True)
-    # BuiltCode Binary
+    LtdHeightDict = {'LH-1': 1, 'LH-1A': 1}
     BuiltCodeDict = {'E': 1}
-    pluto.replace({"builtcode": BuiltCodeDict},inplace=True)
+
+    pluto.replace({"splitzone": BinaryDict,
+                    "irrlotcode": BinaryDict,
+                    "ltdheight": LtdHeightDict,
+                    "builtcode": BuiltCodeDict},inplace=True)
+
+    pluto['ltdheight'].fillna(value=0,inplace=True)
     pluto['builtcode'].fillna(value=0,inplace=True)
-    # Hist Dist Binary
+
     pluto['histdist'] = (pluto['histdist'].notnull())*1
     pluto['histdist'].fillna(value=0,inplace=True)
+
     # Landmark
     pluto['landmark'] = (pluto['landmark'].notnull())*1
     pluto['landmark'].fillna(value=0,inplace=True)
+
     # Ext New Columns
     pluto['garage'] = (pluto['ext']==('G' or 'EG'))*1
     pluto['extension'] = (pluto['ext']==('E' or 'EG'))*1
-    pluto = pluto.drop('ext',axis=1)
-    # Count Alterations 
+
+    # Count Alterations
     pluto['yearalter1'] = (pluto['yearalter1'] > 0)*1
     pluto['yearalter2'] = (pluto['yearalter2'] > 0)*1
     pluto['countalter'] = pluto['yearalter1'] + pluto['yearalter2']
-    pluto = pluto.drop('yearalter1',axis=1)
-    pluto = pluto.drop('yearalter2',axis=1)
+    pluto = pluto.drop(['ext', 'yearalter1', 'yearalter2'], axis=1)
+
     # Round NumFloors and Log
     pluto['numfloors'] = pluto['numfloors'].astype(float).round()
     # Easements Binary
@@ -162,18 +175,28 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
     # BsmtCode Binary
     pluto['bsmtcode'] = pluto['bsmtcode'].replace(5,np.nan)
     pluto['bsmtcode'] = (pluto['bsmtcode'] > 0)*1
+
     # Limit NumBldgs
-    pluto['numbldgs'] = ((pluto['numbldgs']<10)*1).replace(0,np.nan)* pluto['numbldgs']
+    pluto['numbldgs'] = ((pluto['numbldgs']<10)*1).replace(
+                            0,np.nan)* pluto['numbldgs']
+
     # Limit Front and Depth
-    pluto['lotfront'] = ((pluto['lotfront']<100)*1).replace(0,np.nan)* pluto['lotfront']
-    pluto['lotdepth'] = ((pluto['lotdepth']<200)*1).replace(0,np.nan)* pluto['lotdepth']
-    pluto['bldgfront'] = ((pluto['bldgfront']<100)*1).replace(0,np.nan)* pluto['bldgfront']
-    pluto['bldgdepth'] = ((pluto['bldgdepth']<200)*1).replace(0,np.nan)* pluto['bldgdepth']
+    pluto['lotfront'] = ((pluto['lotfront']<100)*1).replace(
+                            0,np.nan)* pluto['lotfront']
+    pluto['lotdepth'] = ((pluto['lotdepth']<200)*1).replace(
+                            0,np.nan)* pluto['lotdepth']
+    pluto['bldgfront'] = ((pluto['bldgfront']<100)*1).replace(
+                            0,np.nan)* pluto['bldgfront']
+    pluto['bldgdepth'] = ((pluto['bldgdepth']<200)*1).replace(
+                            0,np.nan)* pluto['bldgdepth']
     # Fix impossible years
-    pluto['yearbuilt'] = ((pluto['yearbuilt']<2016)*1).replace(0,np.nan)* pluto['yearbuilt']
+    pluto['yearbuilt'] = ((pluto['yearbuilt']<2016)*1).replace(
+                            0,np.nan)* pluto['yearbuilt']
     # Limit UnitRes and UnitsTotal
-    pluto['unitsres'] = ((pluto['unitsres']<100)*1).replace(0,np.nan)* pluto['unitsres']
-    pluto['unitstotal'] = ((pluto['unitstotal']<100)*1).replace(0,np.nan)* pluto['unitstotal']
+    pluto['unitsres'] = ((pluto['unitsres']<100)*1).replace(
+                            0,np.nan)* pluto['unitsres']
+    pluto['unitstotal'] = ((pluto['unitstotal']<100)*1).replace(
+                            0,np.nan)* pluto['unitstotal']
     return pluto
 
 
@@ -197,11 +220,10 @@ def read_in_finance(boros, years, data_dir = "data/finance_sales"):
             print("Pulling Finance data for {}_{}".format(year, borough))
             boro_year = read_in_boro_year_data(borough, year, data_dir)
             boro_year = add_BBL(boro_year)
-            # Append new rows to existing dataframe
             finance = finance.append(boro_year)
-            finance = finance.append(boro_year)
-            finance = finance[['sale_price','sale_date','tax_class_at_time_of_sale','year_built','residential_units', 'commercial_units', 'total_units','block','bbl']]
-    #finance = finance[finance['sale_price'] != 0]
+    finance = finance[['sale_price','sale_date','tax_class_at_time_of_sale',
+            'year_built','residential_units', 'commercial_units', 'total_units',
+            'block','bbl']]
     return finance
 
 
@@ -264,8 +286,8 @@ def get_finance_condo_lot(pluto, finance, dtm):
     finance_condo_updated = pd.merge(finance,
         finance_condos_only[['bbl_pluto', 'unit_bbl']],
         how='left', left_on='bbl', right_on='unit_bbl')
-    finance_condo_updated = finance_condo_updated.drop(['block','bbl'], axis=1)
-    
+    finance_condo_updated = finance_condo_updated.drop(
+        ['block','bbl'], axis=1)
     return finance_condo_updated
 
 
@@ -273,7 +295,6 @@ def bbl_dist_to_subway(data):
     subwaydist = pd.read_csv("data/subwaydist.csv")
     subwaydist = subwaydist.drop(['latitude','longitude'], axis = 1)
     return data.merge(subwaydist,how='left',on='bbl_pluto')
-
 
 
 def merge_pluto_finance(pluto, finance, dtm):
@@ -286,7 +307,7 @@ def merge_pluto_finance(pluto, finance, dtm):
         Pandas DataFrame finance: contains finance data and "bbl" join key
         Pandas DataFrame dtm: contains "unit_bbl" and "condo_numb" for
             joining pluto and dept. of finance condo unit data
-        
+
         Pandas DataFrame
     """
     # First search for finance sales data that matches dtm condo data
@@ -310,13 +331,13 @@ def merge_pluto_finance(pluto, finance, dtm):
 
 def make_dummy_variables(dataframe, feature):
     """Creates dummy columns for a categorical variable in given Pandas dataframe.
-    
-        Args:  
+
+        Args:
             dataframe: Pandas dataframe.
             feature: a categorical variable.
         Returns: dummy variable columns for input feature.
             """
- 
+
     uniques = dataframe[feature].unique()
     lst = list(uniques)
     for x in lst:
@@ -337,8 +358,8 @@ def clean_categorical_vars(dataframe, list_of_cat_vars, boros, years, output_dir
             dataframe: Pandas dataframe.
             list (string) list_of_cat_vars: list of categorical column names
             list (string) boros: list of boros in dataframe.
-            list (int) years: list of years in dataframe. 
-            
+            list (int) years: list of years in dataframe.
+
     '''
     for column in dataframe.columns:
         if (np.any(dataframe[column].isnull())):
@@ -365,7 +386,7 @@ def remove_columns(dataframe, columns):
     return dataframe.drop(columns, axis = 1)
 
 
-                
+
 def main():
     # Set up input option parsing for years and boros to pull data for
     parser = ArgumentParser(description =
@@ -393,10 +414,9 @@ def main():
     buildings = bbl_dist_to_subway(buildings)
     final_cols_to_remove = ['bbl_pluto','borocode','unit_bbl','block','condono']
     buildings = remove_columns(buildings, final_cols_to_remove)
-    cat_vars = ['borough','schooldist','council','bldgclass','landuse','ownertype','proxcode','lottype','tax_class_at_time_of_sale']
+    cat_vars = ['borough','schooldist','council','bldgclass','landuse',
+        'ownertype','proxcode','lottype','tax_class_at_time_of_sale']
     buildings_with_cats = clean_categorical_vars(buildings, cat_vars, boros, years)
 
 if __name__ == '__main__':
     main()
-
-
