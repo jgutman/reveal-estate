@@ -5,6 +5,7 @@ from convert_xy import convert_df
 import math
 import pandas as pd
 from scipy import spatial
+import os
 
 def read_in_boro_year_data(boro, year, data_dir = "data/finance_sales"):
     """
@@ -64,16 +65,18 @@ def add_BBL(data, copy = True):
 
     # Extract the borough, block, and lot, and create a 10-digit code
     # zero-padded code from these three columns in order
-    bbl_columns = data[["borough", "block", "lot"]].itertuples()
+    bbl_columns = processed_data[["borough", "block", "lot"]].itertuples()
     bbl_formatted = pd.Series(["%01d%05d%04d" % (row.borough, row.block,
         row.lot) for row in bbl_columns], dtype='int64')
     processed_data["bbl"] = bbl_formatted
 
     # Remove duplicate bbls by returning only the most recent sales data
     # for each BBL and year
+    processed_data = processed_data.reset_index()
     processed_data["sale_year"] = [d.year for d in processed_data.sale_date]
-    max_idx_by_bbl = processed_data.groupby([
-        'bbl', 'sale_year'])['sale_price'].idxmax().values
+    grouped = processed_data.groupby(['bbl', 'sale_year'])
+
+    max_idx_by_bbl = grouped['sale_price'].idxmax().values
     processed_data = processed_data.loc[max_idx_by_bbl]
     return processed_data
 
@@ -107,8 +110,11 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
         data.columns = [col.strip().lower() for col in data.columns]
         # Append new rows to existing dataframe
         pluto = pluto.append(data)
+    return clean_pluto(pluto)
 
-    #Need to keep 'borocode', 'block' for dtm merge, but remove the rest of unneeded columns
+
+def clean_pluto(pluto):
+    # Need to keep 'borocode', 'block' for dtm merge, but remove the rest of unnecessary columns
     columns_to_remove = ['lot', 'zonedist1','zonedist2', 'zonedist3',
         'zonedist4', 'overlay1', 'overlay2', 'spdist1', 'spdist2',
         'allzoning1', 'allzoning2','ownername', 'lotarea', 'bldgarea',
@@ -218,16 +224,16 @@ def read_in_finance(boros, years, data_dir = "data/finance_sales"):
         for borough in boros:
             print("Pulling Finance data for {}_{}".format(year, borough))
             boro_year = read_in_boro_year_data(borough, year, data_dir)
-            boro_year = add_BBL(boro_year)
             finance = finance.append(boro_year)
+    finance = add_BBL(finance)
     finance = finance[['sale_price','sale_date','tax_class_at_time_of_sale',
             'year_built','residential_units', 'commercial_units', 'total_units',
             'block','bbl']]
     return finance
 
 
-def read_in_dtm(boros, data_dir = 'data/',
-    filename = 'DTM_0316_Condo_Units.csv'):
+def read_in_dtm(boros, data_dir = 'data/dtm',
+        filename = 'DTM_0316_Condo_Units.csv'):
     """
     Reads in the Digital Tax Map dataset and returns a dataframe with mapping
     from borough and condo number to unit BBL for the specified boroughs.
@@ -244,7 +250,7 @@ def read_in_dtm(boros, data_dir = 'data/',
                'UNIT_LOT', 'UNIT_BBL', 'UNIT_DESIG']
     boro_names = ['manhattan', 'bronx', 'brooklyn', 'queens', 'statenisland']
     boro_codes = dict(zip(boro_names, range(1,6)))
-    dtm = pd.read_csv('{}/{}'.format(data_dir, filename), usecols=columns)
+    dtm = pd.read_csv(os.path.join(data_dir, filename), usecols=columns)
     dtm = dtm[dtm.CONDO_BORO.isin([boro_codes.get(boro) for boro in boros])]
     dtm.columns = [col.strip().lower() for col in dtm.columns]
     return dtm
@@ -290,13 +296,15 @@ def get_finance_condo_lot(pluto, finance, dtm):
     return finance_condo_updated
 
 
-def bbl_dist_to_subway(data, filepath = "data/subwaydist.csv"):
+def bbl_dist_to_subway(data,
+        filepath = "data/open_nyc/subwaydist.csv"):
     subwaydist = pd.read_csv(filepath)
     subwaydist = subwaydist.drop(['latitude','longitude'], axis = 1)
     return data.merge(subwaydist,how='left',on='bbl_pluto')
 
 
-def bbl_dist_to_open_NYC_data(data, filepath = "data/some_dist_metrics.csv"):
+def bbl_dist_to_open_NYC_data(data,
+        filepath = "data/open_nyc/some_dist_metrics.csv"):
     other_distances = pd.read_csv(filepath)
     other_distances = other_distances.drop(['latitude','longitude'], axis = 1)
     return data.merge(other_distances,how='left',on='bbl_pluto')
@@ -422,7 +430,8 @@ def main():
     buildings = buildings.drop(final_cols_to_remove, axis=1)
     cat_vars = ['borough','schooldist','council','bldgclass','landuse',
         'ownertype','proxcode','lottype','tax_class_at_time_of_sale']
-    buildings_with_cats = clean_categorical_vars(buildings, cat_vars, boros, years)
+    buildings_with_cats = clean_categorical_vars(
+        buildings, cat_vars, boros, years)
 
 
 if __name__ == '__main__':
