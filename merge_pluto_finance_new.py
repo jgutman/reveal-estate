@@ -274,25 +274,28 @@ def get_finance_condo_lot(pluto, finance, dtm):
     dtm_cols_to_keep = ['unit_bbl', 'condo_boro', 'condo_numb']
     pluto_cols_to_keep = ['bbl', 'block', 'borocode', 'condono']
 
-    print("Finance:{} DTM:{}".format(finance.shape, dtm.shape))
     finance_condos_only = pd.merge(finance, dtm[dtm_cols_to_keep],
         how='inner', left_on=['bbl'], right_on=['unit_bbl'])
 
-    print("Finance intermediate:{} PLUTO:{}".format(finance_condos_only.shape,
-        pluto.shape))
+    # for condos: finance.bbl == finance_condos_only.unit_bbl
+    #             finance_condos_only.bbl_pluto == pluto.bbl
     finance_condos_only = pd.merge(pluto[pluto_cols_to_keep],
         finance_condos_only, how='inner',
         left_on=['borocode', 'block', 'condono'],
         right_on=['condo_boro', 'block', 'condo_numb'],
         suffixes=['_pluto', '_finance'])
-    print("Finance intermediate (all condos): {}".format(
-        finance_condos_only.shape))
 
-    finance_condo_updated = pd.merge(finance,
-        finance_condos_only[['bbl_pluto', 'unit_bbl']],
-        how='left', left_on='bbl', right_on='unit_bbl')
+    finance_condos_only['bbl_pluto'] = finance_condos_only['bbl_pluto'].astype(int)
+    finance_condos_only = [['bbl_pluto', 'bbl_finance']]
+    standard_bbls = list(set(finance.bbl).difference(
+                        set(finance_condos_only.bbl_finance)))
+    bbl_mappings = finance_condos_only.append(pd.DataFrame.from_dict(
+        {'bbl_pluto': standard_bbls, 'bbl_finance': standard_bbls}
+    )).drop_duplicates()
+    finance_condo_updated = pd.merge(finance, bbl_mappings,
+        how='left', left_on='bbl', right_on='bbl_finance')
     finance_condo_updated = finance_condo_updated.drop(
-        ['block','bbl'], axis=1)
+        ['block','bbl', 'bbl_finance'], axis=1)
     return finance_condo_updated
 
 
@@ -335,8 +338,8 @@ def merge_pluto_finance(pluto, finance, dtm):
         left_on='bbl', right_on = 'bbl_pluto',
         suffixes=['_pluto', '_finance'])
     buildings["price_per_sqft"] = buildings["sale_price"].astype('float64') / buildings["gross_sqft_pluto"]
-    buildings = buildings.dropna(how = 'any',subset = ['price_per_sqft'])
-    buildings = buildings[buildings["price_per_sqft"] != 0.0]
+    buildings = buildings[ buildings["price_per_sqft"].notnull()]
+    buildings = buildings[ buildings["price_per_sqft"] > 0.]
     #buildings = buildings[buildings["price_per_sqft"] >= 5]
     #buildings = buildings[buildings["price_per_sqft"] <= 5000]
     return buildings
@@ -426,7 +429,7 @@ def main():
     print("Merging with Open NYC distances")
     buildings = bbl_dist_to_open_NYC_data(buildings)
 
-    final_cols_to_remove = ['bbl_pluto','borocode','unit_bbl','block','condono']
+    final_cols_to_remove = ['bbl_pluto','borocode','block','condono']
     buildings = buildings.drop(final_cols_to_remove, axis=1)
     cat_vars = ['borough','schooldist','council','bldgclass','landuse',
         'ownertype','proxcode','lottype','tax_class_at_time_of_sale']
