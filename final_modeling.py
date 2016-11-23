@@ -4,7 +4,8 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from sklearn import datasets, linear_model
-from sklearn import cross_validation
+# from sklearn import cross_validation
+from sklearn import model_selection as cross_validation
 from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
 from argparse import ArgumentParser
@@ -27,18 +28,20 @@ def create_target_var(data_train, data_test, target_name):
         y_train: Target variable for X_train.
         y_test: Target varibale for X_test.
     '''
-    
+
     cols = list(data_train.columns.values) #Make a list of all of the columns in data_train
     cols.pop(cols.index(target_name))
-    data_train = data_train[cols+[target_name]] #Put target at the end of data_train
-    data_test = data_test[cols+[target_name]] #Put target at the end of data_test
+    # Put target at the end of data_train
+    data_train = data_train[cols+[target_name]]
+    # Put target at the end of data_test
+    data_test = data_test[cols+[target_name]]
     X_train = data_train.ix[:,:-1]
     y_train = data_train.ix[:,-1]
     X_test = data_test.ix[:,:-1]
     y_test = data_test.ix[:,-1]
-    
+
     return X_train, X_test, y_train, y_test
-    
+
 
 
 def fit_LR(X_train, X_test, y_train, y_test):
@@ -51,7 +54,7 @@ def fit_LR(X_train, X_test, y_train, y_test):
         y_test: Target varibale for X_test.
 
     Returns:
-        lin_reg: Linear Regression model 
+        lin_reg: Linear Regression model
     '''
     regr = linear_model.LinearRegression()
     regr.fit(X_train, y_train)
@@ -94,21 +97,15 @@ def main():
     output_dir = "data/merged"
     print("Reading in data from %s" % data_path)
     df = pd.read_csv(data_path, low_memory = True)
-    #drop columns that are not needed or are redundant
+    # drop columns that are not needed or are redundant
     df = drop_cols(df, ['zonemap','sale_date','sale_price','year_built'])
+    df = df.drop_duplicates()
+
     print("Splitting data into training and test sets")
     data_train, data_test = split_data(df)
     print("Cleaning data train and data test: %s, %s" % (data_train.shape, data_test.shape))
     data_train, data_test = fill_na(data_train, data_test)
-    #print("Saving training data to %s/%s" % (output_dir, "data_train"))
-    #data_train.to_csv((output_dir + "/data_train"), index = False, chunksize=1e4)
-    #print("Saving test data to %s/%s" % (output_dir, "data_test"))
-    #data_test.to_csv((output_dir + "/data_test"), index = False, chunksize=1e4)
-    
-    
-  
-    #data_train = pd.read_csv((data_path + "/data_train"))
-    #data_test = pd.read_csv((data_path + "/data_test"))
+
     print("Creating target variable")
     X_train, X_test, y_train, y_test = create_target_var(data_train, data_test, 'price_per_sqft')
     if model_type == 'lr':
@@ -119,12 +116,7 @@ def main():
         random_forest = fit_RF(X_train, X_test, y_train, y_test)
     else:
         print("Please enter a valid model name (LR for Linear Regression or RF for Random Forest.")
-    
+
 
 if __name__ == '__main__':
-    main()  
-    
-    
-    
-    
-    
+    main()
