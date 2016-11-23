@@ -286,14 +286,21 @@ def get_finance_condo_lot(pluto, finance, dtm):
         suffixes=['_pluto', '_finance'])
 
     finance_condos_only['bbl_pluto'] = finance_condos_only['bbl_pluto'].astype(int)
-    finance_condos_only = [['bbl_pluto', 'bbl_finance']]
+    finance_condos_only = finance_condos_only[
+            ['bbl_pluto', 'bbl_finance']].drop_duplicates()
+             # duplicates only if a bbl is listed in multiple years
+
+    # get a list of bbls that are not condos (same in pluto and finance)
     standard_bbls = list(set(finance.bbl).difference(
                         set(finance_condos_only.bbl_finance)))
+    # combine condo bbls that differ with standard bbls that are the same
     bbl_mappings = finance_condos_only.append(pd.DataFrame.from_dict(
         {'bbl_pluto': standard_bbls, 'bbl_finance': standard_bbls}
-    )).drop_duplicates()
+    ))
     finance_condo_updated = pd.merge(finance, bbl_mappings,
         how='left', left_on='bbl', right_on='bbl_finance')
+    # finance condo updated: remove bbl/unit_bbl/bbl_finance
+    # retain only bbl_pluto to match with pluto.bbl in merge
     finance_condo_updated = finance_condo_updated.drop(
         ['block','bbl', 'bbl_finance'], axis=1)
     return finance_condo_updated
