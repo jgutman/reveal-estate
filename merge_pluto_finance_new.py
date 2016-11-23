@@ -73,7 +73,7 @@ def add_BBL(data, copy = True):
     # for each BBL and year
     processed_data["sale_year"] = [d.year for d in processed_data.sale_date]
     max_idx_by_bbl = processed_data.groupby([
-        'bbl', 'sale_year'])['sale_price'].idxmax()
+        'bbl', 'sale_year'])['sale_price'].idxmax().values
     processed_data = processed_data.loc[max_idx_by_bbl]
     return processed_data
 
@@ -179,7 +179,6 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
     # Limit NumBldgs
     pluto['numbldgs'] = ((pluto['numbldgs']<10)*1).replace(
                             0,np.nan)* pluto['numbldgs']
-
     # Limit Front and Depth
     pluto['lotfront'] = ((pluto['lotfront']<100)*1).replace(
                             0,np.nan)* pluto['lotfront']
@@ -291,10 +290,16 @@ def get_finance_condo_lot(pluto, finance, dtm):
     return finance_condo_updated
 
 
-def bbl_dist_to_subway(data):
-    subwaydist = pd.read_csv("data/subwaydist.csv")
+def bbl_dist_to_subway(data, filepath = "data/subwaydist.csv"):
+    subwaydist = pd.read_csv(filepath)
     subwaydist = subwaydist.drop(['latitude','longitude'], axis = 1)
     return data.merge(subwaydist,how='left',on='bbl_pluto')
+
+
+def bbl_dist_to_open_NYC_data(data, filepath = "data/some_dist_metrics.csv"):
+    other_distances = pd.read_csv(filepath)
+    other_distances = other_distances.drop(['latitude','longitude'], axis = 1)
+    return data.merge(other_distances,how='left',on='bbl_pluto')
 
 
 def merge_pluto_finance(pluto, finance, dtm):
@@ -307,7 +312,7 @@ def merge_pluto_finance(pluto, finance, dtm):
         Pandas DataFrame finance: contains finance data and "bbl" join key
         Pandas DataFrame dtm: contains "unit_bbl" and "condo_numb" for
             joining pluto and dept. of finance condo unit data
-
+    Returns:
         Pandas DataFrame
     """
     # First search for finance sales data that matches dtm condo data
@@ -330,14 +335,15 @@ def merge_pluto_finance(pluto, finance, dtm):
 
 
 def make_dummy_variables(dataframe, feature):
-    """Creates dummy columns for a categorical variable in given Pandas dataframe.
+    """
+    Creates dummy columns for a categorical variable in given Pandas dataframe.
 
-        Args:
-            dataframe: Pandas dataframe.
-            feature: a categorical variable.
-        Returns: dummy variable columns for input feature.
-            """
-
+    Args:
+        dataframe: Pandas dataframe.
+        feature: a categorical variable.
+    Returns:
+        dummy variable columns for input feature.
+    """
     uniques = dataframe[feature].unique()
     lst = list(uniques)
     for x in lst:
@@ -352,15 +358,17 @@ def make_dummy_variables(dataframe, feature):
     dummies.drop(colnames[-1], axis=1, inplace=True)
     return dummies
 
+
 def clean_categorical_vars(dataframe, list_of_cat_vars, boros, years, output_dir='data/merged'):
-    '''Append the original dataframe with output of make_dummy_variables. This function also adds a binary column for each feature that has missing values. This binary column is 1 if value is missing.
+    """Append the original dataframe with output of make_dummy_variables.
+    This function also adds a binary column for each feature that has missing values.
+    This binary column is 1 if value is missing.
         Args:
             dataframe: Pandas dataframe.
             list (string) list_of_cat_vars: list of categorical column names
             list (string) boros: list of boros in dataframe.
             list (int) years: list of years in dataframe.
-
-    '''
+    """
     for column in dataframe.columns:
         if (np.any(dataframe[column].isnull())):
             dataframe[column + "_mv"] = dataframe[column].isnull().astype(int)
@@ -368,23 +376,13 @@ def clean_categorical_vars(dataframe, list_of_cat_vars, boros, years, output_dir
         dummies = make_dummy_variables(dataframe, var)
         dataframe = pd.concat([dataframe, dummies], axis=1)
         dataframe = dataframe.drop(var, axis=1)
+    boros.sort()
     output = "{output_dir}/{boros_joined}_{min_year}_{max_year}.csv".format(
-    boros_joined = "_".join(boros), min_year = min(years),
-    max_year = max(years), output_dir = output_dir)
-    print(dataframe.shape)
+        boros_joined = "_".join(boros), min_year = min(years),
+        max_year = max(years), output_dir = output_dir)
     print("Writing output to file in {}".format(output))
     dataframe.to_csv(output, index = False, chunksize=1e4)
     return dataframe
-
-def remove_columns(dataframe, columns):
-    """Removes final unnecessary columns that were used previously for merges.
-        Args:
-            dataframe: Pandas dataframe.
-            list (string) columns: list of columns to remove.
-        Returns: Pandas dataframe
-    """
-    return dataframe.drop(columns, axis = 1)
-
 
 
 def main():
@@ -397,8 +395,13 @@ def main():
         help="Adds a borough to the list to pull sales/pluto data for. Possible boroughs include Brooklyn, Bronx, StatenIsland (as 1 or 2 words, or SI), Queens, and Manhattan. Not case sensitive.")
     parser.set_defaults(years = [2014, 2015],
         boros = ["brooklyn", "manhattan"])
+
     args = parser.parse_args()
     years, boros = args.years, args.boros
+    if years == ["all"]:
+        years = list(range(2003, 2017))
+    if boros == ["all"]:
+        boros = ["manhattan", "brooklyn", "queens", "bronx", "statenisland"]
 
     # Convert to lowercase and remove spaces in borough names
     boros = ["".join(boro.lower().split()) for boro in boros]
@@ -412,11 +415,15 @@ def main():
     buildings = merge_pluto_finance(pluto, finance, dtm)
     print("Merging with subway data")
     buildings = bbl_dist_to_subway(buildings)
+    print("Merging with Open NYC distances")
+    buildings = bbl_dist_to_open_NYC_data(buildings)
+
     final_cols_to_remove = ['bbl_pluto','borocode','unit_bbl','block','condono']
-    buildings = remove_columns(buildings, final_cols_to_remove)
+    buildings = buildings.drop(final_cols_to_remove, axis=1)
     cat_vars = ['borough','schooldist','council','bldgclass','landuse',
         'ownertype','proxcode','lottype','tax_class_at_time_of_sale']
     buildings_with_cats = clean_categorical_vars(buildings, cat_vars, boros, years)
+
 
 if __name__ == '__main__':
     main()
