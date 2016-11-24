@@ -98,7 +98,7 @@ def main():
     print("Reading in data from %s" % data_path)
     df = pd.read_csv(data_path, low_memory = True)
     # drop columns that are not needed or are redundant
-    df = drop_cols(df, ['zonemap','sale_date','sale_price','year_built'])
+    df = drop_cols(df, ['zonemap','sale_date','sale_price','year_built','latitude','longitude','bbl'])
     df = df.drop_duplicates()
 
     print("Splitting data into training and test sets")

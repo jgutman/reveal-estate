@@ -10,7 +10,6 @@ Module to do final cleaning and train/test split of the data before modeling.
 '''
 
 def drop_cols(data, cols):
-    #data = data[data['price_per_sqft'] > 5]
     return data.drop(cols, axis = 1)
 
 
