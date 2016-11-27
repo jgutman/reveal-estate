@@ -163,19 +163,19 @@ def clean_pluto(pluto):
     pluto['landmark'].fillna(value=0,inplace=True)
     
     #Building Class
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['A1','A2','A3','A4','A5','A6','A7','A8','A9'], ['A' for i in range(9)])
+    pluto['bldgclass'] = pluto['bldgclass'].replace(['A0','A1','A2','A3','A4','A5','A6','A7','A8','A9'], ['A' for i in range(10)])
     pluto['bldgclass'] = pluto['bldgclass'].replace(['B1','B2','B3','B4','B5','B6','B7','B8','B9'], ['B' for i in range(9)])
     pluto['bldgclass'] = pluto['bldgclass'].replace(['C0','C1','C2','C3','C4','C5','C6','C7','C8','C9'], ['C' for i in range(10)])
     pluto['bldgclass'] = pluto['bldgclass'].replace(['D0','D1','D2','D3','D4','D5','D6','D7','D8','D9'], ['D' for i in range(10)])
     pluto['bldgclass'] = pluto['bldgclass'].replace(['E0','E1','E2','E3','E4','E5','E6','E7','E8','E9'], ['E' for i in range(10)])
     pluto['bldgclass'] = pluto['bldgclass'].replace(['F1','F2','F3','F4','F5','F6','F7','F8','F9'], ['F' for i in range(9)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['G1','G2','GU','G4','G5','GW','G7','G8','G9'], ['G' for i in range(9)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['HB','H1','H2','H3','H6','HS','H8'], ['H' for i in range(7)])
+    pluto['bldgclass'] = pluto['bldgclass'].replace(['G0','G1','G2','G3','GU','G4','G5','GW','G7','G8','G9'], ['G' for i in range(11)])
+    pluto['bldgclass'] = pluto['bldgclass'].replace(['H4','HB','H1','H2','H3','H6','HS','H8'], ['H' for i in range(8)])
     pluto['bldgclass'] = pluto['bldgclass'].replace(['I1','I4','I5','I6','I7','I8','I9'], ['I' for i in range(7)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['J1','J2','J5','J6','J8'], ['J' for i in range(5)])
+    pluto['bldgclass'] = pluto['bldgclass'].replace(['J3','J1','J2','J5','J6','J8'], ['J' for i in range(6)])
     pluto['bldgclass'] = pluto['bldgclass'].replace(['K1','K2','K3','K4','K5','K6','K7','K8','K9'], ['K' for i in range(9)])
     pluto['bldgclass'] = pluto['bldgclass'].replace(['L1','L3','L8','L9'], ['L' for i in range(4)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['M1','M9','M3'], ['M' for i in range(3)])
+    pluto['bldgclass'] = pluto['bldgclass'].replace(['M1','M9','M3','M4'], ['M' for i in range(4)])
     pluto['bldgclass'] = pluto['bldgclass'].replace(['N1','N2','N9'], ['N' for i in range(3)])
     pluto['bldgclass'] = pluto['bldgclass'].replace(['O1','O2','O3','O4','O5','O6','O7','O8','O9'], ['O' for i in range(9)])
     pluto['bldgclass'] = pluto['bldgclass'].replace(['P1','P2','P3','P4','P5','P6','P7','P8','P9'], ['P' for i in range(9)])
@@ -184,7 +184,8 @@ def clean_pluto(pluto):
     pluto['bldgclass'] = pluto['bldgclass'].replace(['V1','V2'], ['V' for i in range(2)])
     pluto['bldgclass'] = pluto['bldgclass'].replace(['W1','W2','W3','W4','W5','W6','W7','W8','W9'], ['W' for i in range(9)])
     pluto['bldgclass'] = pluto['bldgclass'].replace(['Y4','Y6'], ['Y' for i in range(2)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['Z4','Z5'], ['Z' for i in range(2)])
+    pluto['bldgclass'] = pluto['bldgclass'].replace('Q8', 'Q')
+    pluto['bldgclass'] = pluto['bldgclass'].replace(['Z4','Z5','Z9'], ['Z' for i in range(3)])
     
     
     # Ext New Columns
@@ -456,6 +457,7 @@ def main():
     print("Getting DTM Condo Unit data for: {}".format(boros))
     dtm = read_in_dtm(boros)
     buildings = merge_pluto_finance(pluto, finance, dtm)
+    buildings.to_csv("pluto_finance_test.csv", index = False)
     print("Merging with subway data")
     buildings = bbl_dist_to_subway(buildings)
     print("Merging with Open NYC distances")
