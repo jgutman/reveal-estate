@@ -4,8 +4,8 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from sklearn import datasets, linear_model
-# from sklearn import cross_validation
-from sklearn import model_selection as cross_validation
+from sklearn import cross_validation
+#from sklearn import model_selection as cross_validation
 from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
 from argparse import ArgumentParser
@@ -99,7 +99,7 @@ def main():
     df = pd.read_csv(data_path, low_memory = True)
     # drop columns that are not needed or are redundant
     df = drop_cols(df, ['zonemap','sale_date','sale_price','year_built','latitude','longitude','bbl'])
-    df = df.drop_duplicates()
+    #df = df.drop_duplicates()
 
     print("Splitting data into training and test sets")
     data_train, data_test = split_data(df)

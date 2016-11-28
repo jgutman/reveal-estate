@@ -373,8 +373,6 @@ def merge_pluto_finance(pluto, finance, dtm):
     buildings["price_per_sqft"] = buildings["sale_price"].astype('float64') / buildings["gross_sqft_pluto"]
     buildings = buildings[ buildings["price_per_sqft"].notnull()]
     buildings = buildings[ buildings["price_per_sqft"] > 0.]
-    #buildings = buildings[buildings["price_per_sqft"] >= 5]
-    #buildings = buildings[buildings["price_per_sqft"] <= 5000]
     return buildings
 
 

@@ -10,6 +10,8 @@ Module to do final cleaning and train/test split of the data before modeling.
 '''
 
 def drop_cols(data, cols):
+    data = data[data["price_per_sqft"] >= 10]
+    data = data[data["price_per_sqft"] <= 5000]
     return data.drop(cols, axis = 1)
 
 
@@ -33,9 +35,9 @@ def split_data(data):
     for col in non_float:
         data[col] = data[col].astype(float)
     #drop NaN for crucial columns
-    data= data.dropna(how = 'any', subset = ['latitude','longitude','price_per_sqft'])   
+    data= data.dropna(how = 'any', subset = ['price_per_sqft'])   
     #Split the data
-    split = cross_validation.ShuffleSplit(data.shape[0], n_iter=1, train_size = 0.7, test_size=.3, random_state = 1)
+    split = cross_validation.ShuffleSplit(data.shape[0], n_iter=1, train_size = 0.8, test_size=.2, random_state = 1)
 
     for train, test in split:
         train_index = train
