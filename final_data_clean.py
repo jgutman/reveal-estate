@@ -69,6 +69,10 @@ def fill_na(data_train, data_test):
     return data_train, data_test
 
 
+def as_float(data):
+    for col in data.columns.values:
+        data[col] = data[col].astype('float32')
+    return data
 
     
     

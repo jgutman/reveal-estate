@@ -336,14 +336,14 @@ def bbl_dist_to_subway(data,
         filepath = "data/open_nyc/subwaydist.csv"):
     subwaydist = pd.read_csv(filepath)
     subwaydist = subwaydist.drop(['latitude','longitude'], axis = 1)
-    return data.merge(subwaydist,how='left',on='bbl_pluto')
+    return data.merge(subwaydist,how='left',left_on='bbl_pluto', right_on= 'bbl')
 
 
 def bbl_dist_to_open_NYC_data(data,
         filepath = "data/open_nyc/some_dist_metrics.csv"):
     other_distances = pd.read_csv(filepath)
     other_distances = other_distances.drop(['latitude','longitude'], axis = 1)
-    return data.merge(other_distances,how='left',on='bbl_pluto')
+    return data.merge(other_distances,how='left',left_on='bbl_pluto', right_on= 'bbl')
 
 
 def merge_pluto_finance(pluto, finance, dtm):
