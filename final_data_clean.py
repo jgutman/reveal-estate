@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import math
-from sklearn import cross_validation
+from sklearn import model_selection
 from argparse import ArgumentParser
 
 '''
@@ -37,9 +37,9 @@ def split_data(data):
     #drop NaN for crucial columns
     data= data.dropna(how = 'any', subset = ['price_per_sqft'])   
     #Split the data
-    split = cross_validation.ShuffleSplit(data.shape[0], n_iter=1, train_size = 0.8, test_size=.2, random_state = 1)
+    rs = model_selection.ShuffleSplit(train_size = 0.8, test_size=.2, random_state = 1, n_splits = 1)
 
-    for train, test in split:
+    for train, test in rs.split(data):
         train_index = train
         test_index = test
     data_train = data.ix[train_index,:]

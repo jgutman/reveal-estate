@@ -4,8 +4,8 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from sklearn import datasets, linear_model
-from sklearn import cross_validation
-#from sklearn import model_selection as cross_validation
+#from sklearn import model_selection
+from sklearn import model_selection as cross_validation
 from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
 from argparse import ArgumentParser
@@ -13,6 +13,8 @@ from final_data_clean import *
 
 import seaborn as sns
 sns.set(color_codes=True)
+
+import warnings
 
 
 def create_target_var(data_train, data_test, target_name):
@@ -82,6 +84,7 @@ def fit_RF(X_train, X_test, y_train, y_test):
 
 
 def main():
+    warnings.filterwarnings("ignore")
     # Set up input option parsing for model type and data path
     parser = ArgumentParser(description =
         "Model type (Linear Regression LR or Random Forest RF)")

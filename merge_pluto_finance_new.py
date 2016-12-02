@@ -137,6 +137,7 @@ def clean_pluto(pluto):
        'unitstotal', 'lotfront', 'lotdepth', 'bldgfront', 'bldgdepth',
        'proxcode','lottype', 'bsmtcode', 'yearbuilt', 'yearalter1',
        'yearalter2', 'bbl','condono', 'xcoord', 'ycoord']
+
     pluto[columns_to_float] = pluto[columns_to_float].astype(float)
 
     pluto['gross_sqft_pluto'] = pluto['resarea'] + pluto['comarea']
@@ -147,10 +148,10 @@ def clean_pluto(pluto):
     LtdHeightDict = {'LH-1': 1, 'LH-1A': 1}
     BuiltCodeDict = {'E': 1}
 
-    pluto.replace({"splitzone": BinaryDict,
-                    "irrlotcode": BinaryDict,
-                    "ltdheight": LtdHeightDict,
-                    "builtcode": BuiltCodeDict},inplace=True)
+#pluto.replace({"splitzone": BinaryDict,
+#"irrlotcode": BinaryDict,
+# "ltdheight": LtdHeightDict,
+# "builtcode": BuiltCodeDict},inplace=True)
 
     pluto['ltdheight'].fillna(value=0,inplace=True)
     pluto['builtcode'].fillna(value=0,inplace=True)
@@ -452,10 +453,11 @@ def main():
     pluto = read_in_pluto(boros)
     print("Getting Finance data for: {} and {}".format(boros, years))
     finance = read_in_finance(boros, years)
+#finance.to_csv("finance_queens.csv", index = False)
     print("Getting DTM Condo Unit data for: {}".format(boros))
     dtm = read_in_dtm(boros)
     buildings = merge_pluto_finance(pluto, finance, dtm)
-    buildings.to_csv("pluto_finance_test.csv", index = False)
+
     print("Merging with subway data")
     buildings = bbl_dist_to_subway(buildings)
     print("Merging with Open NYC distances")
@@ -467,6 +469,7 @@ def main():
         'ownertype','proxcode','lottype','tax_class_at_time_of_sale']
     buildings_with_cats = clean_categorical_vars(
         buildings, cat_vars, boros, years)
+
 
 
 if __name__ == '__main__':
