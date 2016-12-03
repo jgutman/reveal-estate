@@ -136,7 +136,7 @@ def clean_pluto(pluto):
        'landuse', 'easements','numbldgs', 'numfloors', 'unitsres',
        'unitstotal', 'lotfront', 'lotdepth', 'bldgfront', 'bldgdepth',
        'proxcode','lottype', 'bsmtcode', 'yearbuilt', 'yearalter1',
-       'yearalter2', 'bbl','condono', 'xcoord', 'ycoord']
+       'yearalter2','condono', 'xcoord', 'ycoord']
 
     pluto[columns_to_float] = pluto[columns_to_float].astype(float)
 
@@ -162,7 +162,7 @@ def clean_pluto(pluto):
     # Landmark
     pluto['landmark'] = (pluto['landmark'].notnull())*1
     pluto['landmark'].fillna(value=0,inplace=True)
-    
+
     #Building Class
     pluto['bldgclass'] = pluto['bldgclass'].replace(['A0','A1','A2','A3','A4','A5','A6','A7','A8','A9'], ['A' for i in range(10)])
     pluto['bldgclass'] = pluto['bldgclass'].replace(['B1','B2','B3','B4','B5','B6','B7','B8','B9'], ['B' for i in range(9)])
@@ -187,8 +187,8 @@ def clean_pluto(pluto):
     pluto['bldgclass'] = pluto['bldgclass'].replace(['Y4','Y6'], ['Y' for i in range(2)])
     pluto['bldgclass'] = pluto['bldgclass'].replace('Q8', 'Q')
     pluto['bldgclass'] = pluto['bldgclass'].replace(['Z4','Z5','Z9'], ['Z' for i in range(3)])
-    
-    
+
+
     # Ext New Columns
     pluto['garage'] = (pluto['ext']==('G' or 'EG'))*1
     pluto['extension'] = (pluto['ext']==('E' or 'EG'))*1
@@ -277,6 +277,7 @@ def read_in_dtm(boros, data_dir = 'data/dtm',
                'UNIT_LOT', 'UNIT_BBL', 'UNIT_DESIG']
     boro_names = ['manhattan', 'bronx', 'brooklyn', 'queens', 'statenisland']
     boro_codes = dict(zip(boro_names, range(1,6)))
+    dtm.unit_bbl = dtm.unit_bbl.astype('int64')
     dtm = pd.read_csv(os.path.join(data_dir, filename), usecols=columns)
     dtm = dtm[dtm.CONDO_BORO.isin([boro_codes.get(boro) for boro in boros])]
     dtm.columns = [col.strip().lower() for col in dtm.columns]
