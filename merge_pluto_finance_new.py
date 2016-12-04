@@ -7,80 +7,6 @@ import pandas as pd
 from scipy import spatial
 import os
 
-def read_in_boro_year_data(boro, year, data_dir = "data/finance_sales"):
-    """
-    Fetches data file for a specified boro and year, and returns the data as a
-    Pandas dataframe. Checks integrity of boro/year arguments.
-
-    Args:
-        string boro: name of boro for desired data
-        int year: year of desired data
-    Returns:
-        Pandas DataFrame
-    """
-    # Acceptable inputs
-    boros = ['manhattan', 'bronx', 'brooklyn', 'queens', 'statenisland']
-    years = range(2003, 2017)
-
-    # Format input arguments appropriately
-    try:
-        year = int(year)
-    except TypeError:
-        print("inappropriate year for data")
-    if year < 100:
-        year = year + 2000
-    assert(year in years), "inappropriate year for data"
-    if boro == "si":
-        boro = "statenisland"
-    assert(boro in boros), "inappropriate boro for data"
-
-    # Reads in Excel file skipping appropriate number of junk rows at the
-    # beginning of file, keeping the header row as a header
-    filename = "{data_dir}/{year}_{boro}.xls".format(data_dir = data_dir,
-        year = year, boro = boro)
-    skip_rows = 4 if year > 2010 else 3
-    data = pd.read_excel(filename, skiprows = skip_rows)
-    # Remove newline characters from column headers
-    # Convert column names to lowercase
-    # Replaces spaces in column names with underscores
-    data.columns = [col.strip().lower().replace(" ", "_")
-            for col in data.columns]
-    return data
-
-
-def add_BBL(data, copy = True):
-    """
-    Takes a raw dataframe and adds the BBL code (Borough, Block, Lot)
-    Args:
-        Pandas DataFrame data: raw data frame to append the "bbl" and
-        boolean copy: whether to make a copy or alter the dataframe in place
-    Returns:
-        Pandas DataFrame
-    """
-    # Copy the data frame to a new object if desired
-    if copy:
-        processed_data = data.copy()
-    else:
-        processed_data = data
-
-    # Extract the borough, block, and lot, and create a 10-digit code
-    # zero-padded code from these three columns in order
-    bbl_columns = processed_data[["borough", "block", "lot"]].itertuples()
-    bbl_formatted = pd.Series(["%01d%05d%04d" % (row.borough, row.block,
-        row.lot) for row in bbl_columns], dtype='int64')
-    processed_data["bbl"] = bbl_formatted
-
-    # Remove duplicate bbls by returning only the most recent sales data
-    # for each BBL and year
-    processed_data = processed_data.reset_index()
-    processed_data["sale_year"] = [d.year for d in processed_data.sale_date]
-    grouped = processed_data.groupby(['bbl', 'sale_year'])
-
-    max_idx_by_bbl = grouped['sale_price'].idxmax().values
-    processed_data = processed_data.loc[max_idx_by_bbl]
-    return processed_data
-
-
 def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
     """
     Takes a list of boroughs and extracts PLUTO data for each borough,
@@ -232,6 +158,71 @@ def clean_pluto(pluto):
     return pluto
 
 
+def read_in_boro_year_data(boro, year, data_dir = "data/finance_sales"):
+    """
+    Fetches data file for a specified boro and year, and returns the data as a
+    Pandas dataframe. Checks integrity of boro/year arguments.
+
+    Args:
+        string boro: name of boro for desired data
+        int year: year of desired data
+    Returns:
+        Pandas DataFrame
+    """
+    # Acceptable inputs
+    boros = ['manhattan', 'bronx', 'brooklyn', 'queens', 'statenisland']
+    years = range(2003, 2017)
+
+    # Format input arguments appropriately
+    try:
+        year = int(year)
+    except TypeError:
+        print("inappropriate year for data")
+    if year < 100:
+        year = year + 2000
+    assert(year in years), "inappropriate year for data"
+    if boro == "si":
+        boro = "statenisland"
+    assert(boro in boros), "inappropriate boro for data"
+
+    # Reads in Excel file skipping appropriate number of junk rows at the
+    # beginning of file, keeping the header row as a header
+    filename = "{data_dir}/{year}_{boro}.xls".format(data_dir = data_dir,
+        year = year, boro = boro)
+    skip_rows = 4 if year > 2010 else 3
+    data = pd.read_excel(filename, skiprows = skip_rows)
+    # Remove newline characters from column headers
+    # Convert column names to lowercase
+    # Replaces spaces in column names with underscores
+    data.columns = [col.strip().lower().replace(" ", "_")
+            for col in data.columns]
+    return data
+
+
+def add_BBL(data, copy = True):
+    """
+    Takes a raw dataframe and adds the BBL code (Borough, Block, Lot)
+    Args:
+        Pandas DataFrame data: raw data frame to append the "bbl" and
+        boolean copy: whether to make a copy or alter the dataframe in place
+    Returns:
+        Pandas DataFrame
+    """
+    # Copy the data frame to a new object if desired
+    if copy:
+        processed_data = data.copy()
+    else:
+        processed_data = data
+
+    # Extract the borough, block, and lot, and create a 10-digit code
+    # zero-padded code from these three columns in order
+    bbl_columns = processed_data[["borough", "block", "lot"]].itertuples()
+    bbl_formatted = pd.Series(["%01d%05d%04d" % (row.borough, row.block,
+        row.lot) for row in bbl_columns], dtype='int64')
+    processed_data["bbl"] = bbl_formatted
+    return processed_data
+
+
 def read_in_finance(boros, years, data_dir = "data/finance_sales"):
     """
     Takes a list of boroughs and years and extracts finance data for each year,
@@ -313,10 +304,11 @@ def get_finance_condo_lot(pluto, finance, dtm):
         right_on=['condo_boro', 'block', 'condo_numb'],
         suffixes=['_pluto', '_finance'])
 
-    finance_condos_only['bbl_pluto'] = finance_condos_only['bbl_pluto'].astype(int)
     finance_condos_only = finance_condos_only[
             ['bbl_pluto', 'bbl_finance']].drop_duplicates()
              # duplicates only if a bbl is listed in multiple years
+    finance_condos_only = finance_condos_only.loc[lambda df:
+            np.floor(df.bbl_pluto / 1e4) == np.floor(df.bbl_finance / 1e4)]
 
     # get a list of bbls that are not condos (same in pluto and finance)
     standard_bbls = list(set(finance.bbl).difference(
@@ -325,12 +317,23 @@ def get_finance_condo_lot(pluto, finance, dtm):
     bbl_mappings = finance_condos_only.append(pd.DataFrame.from_dict(
         {'bbl_pluto': standard_bbls, 'bbl_finance': standard_bbls}
     ))
+    bbl_mappings = bbl_mappings.reset_index(drop = True)
+
     finance_condo_updated = pd.merge(finance, bbl_mappings,
         how='left', left_on='bbl', right_on='bbl_finance')
-    # finance condo updated: remove bbl/unit_bbl/bbl_finance
+    # finance condo updated: remove bbl/block/bbl_finance
     # retain only bbl_pluto to match with pluto.bbl in merge
     finance_condo_updated = finance_condo_updated.drop(
         ['block','bbl', 'bbl_finance'], axis=1)
+
+    # Remove duplicate bbls by returning only the most recent sales data
+    # for each BBL and year
+    finance_condo_updated = finance_condo_updated.reset_index()
+    finance_condo_updated["sale_year"] = [d.year for d in
+        finance_condo_updated.sale_date]
+    grouped = finance_condo_updated.groupby(['bbl_pluto', 'sale_year'])
+    max_idx_by_bbl = grouped['sale_price'].idxmax().values
+    finance_condo_updated = finance_condo_updated.loc[max_idx_by_bbl]
     return finance_condo_updated
 
 
