@@ -55,106 +55,68 @@ def clean_pluto(pluto):
     # Convert xcoord and ycoord columns to latitude and longitudes
     pluto = convert_df(pluto, "xcoord", "ycoord")
 
-    # Convert xcoord and ycoord columns to latitude and longitudes
-    pluto = convert_df(pluto, "xcoord", "ycoord")
-
-    columns_to_float =['schooldist', 'council', 'zipcode','comarea', 'resarea',
+    columns_to_float =['schooldist', 'council', 'comarea', 'resarea',
        'landuse', 'easements','numbldgs', 'numfloors', 'unitsres',
        'unitstotal', 'lotfront', 'lotdepth', 'bldgfront', 'bldgdepth',
        'proxcode','lottype', 'bsmtcode', 'yearbuilt', 'yearalter1',
-       'yearalter2','condono', 'xcoord', 'ycoord']
+       'yearalter2', 'xcoord', 'ycoord']
 
     pluto[columns_to_float] = pluto[columns_to_float].astype(float)
 
-    pluto['gross_sqft_pluto'] = pluto['resarea'] + pluto['comarea']
-    pluto = pluto[ pluto['gross_sqft_pluto'] != 0]
-    pluto = pluto[ pluto['gross_sqft_pluto'].notnull()]
+    pluto['gross_sqft_pluto'] = pluto.resarea + pluto.comarea
+    pluto = pluto.loc[ pluto.gross_sqft_pluto != 0]
+    pluto = pluto.loc[ pluto.gross_sqft_pluto.notnull()]
 
-    BinaryDict = {'N': 0, 'Y': 1}
-    LtdHeightDict = {'LH-1': 1, 'LH-1A': 1}
-    BuiltCodeDict = {'E': 1}
+    BinaryDict = {'N':0, 'Y':1, np.nan:0}
+    LtdHeightDict = {'LH*':1, np.nan:0}
+    BuiltCodeDict = {'E':1, np.nan:0}
+    NamedDistDict = {'\w':1, np.nan:0}
 
-#pluto.replace({"splitzone": BinaryDict,
-#"irrlotcode": BinaryDict,
-# "ltdheight": LtdHeightDict,
-# "builtcode": BuiltCodeDict},inplace=True)
-
-    pluto['ltdheight'].fillna(value=0,inplace=True)
-    pluto['builtcode'].fillna(value=0,inplace=True)
-
-    pluto['histdist'] = (pluto['histdist'].notnull())*1
-    pluto['histdist'].fillna(value=0,inplace=True)
-
-    # Landmark
-    pluto['landmark'] = (pluto['landmark'].notnull())*1
-    pluto['landmark'].fillna(value=0,inplace=True)
-
-    #Building Class
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['A0','A1','A2','A3','A4','A5','A6','A7','A8','A9'], ['A' for i in range(10)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['B1','B2','B3','B4','B5','B6','B7','B8','B9'], ['B' for i in range(9)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['C0','C1','C2','C3','C4','C5','C6','C7','C8','C9'], ['C' for i in range(10)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['D0','D1','D2','D3','D4','D5','D6','D7','D8','D9'], ['D' for i in range(10)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['E0','E1','E2','E3','E4','E5','E6','E7','E8','E9'], ['E' for i in range(10)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['F1','F2','F3','F4','F5','F6','F7','F8','F9'], ['F' for i in range(9)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['G0','G1','G2','G3','GU','G4','G5','GW','G7','G8','G9'], ['G' for i in range(11)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['H4','HB','H1','H2','H3','H6','HS','H8'], ['H' for i in range(8)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['I1','I4','I5','I6','I7','I8','I9'], ['I' for i in range(7)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['J3','J1','J2','J5','J6','J8'], ['J' for i in range(6)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['K1','K2','K3','K4','K5','K6','K7','K8','K9'], ['K' for i in range(9)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['L1','L3','L8','L9'], ['L' for i in range(4)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['M1','M9','M3','M4'], ['M' for i in range(4)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['N1','N2','N9'], ['N' for i in range(3)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['O1','O2','O3','O4','O5','O6','O7','O8','O9'], ['O' for i in range(9)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['P1','P2','P3','P4','P5','P6','P7','P8','P9'], ['P' for i in range(9)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['RB','R1','R2','R3','R4','RD','R6','RC','R9','RH','RI','RM','RX','RZ','RG','RA'], ['R' for i in range(16)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['S0','S1','S2','S3','S4','S5','S9'], ['S' for i in range(7)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['V1','V2'], ['V' for i in range(2)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['W1','W2','W3','W4','W5','W6','W7','W8','W9'], ['W' for i in range(9)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['Y4','Y6'], ['Y' for i in range(2)])
-    pluto['bldgclass'] = pluto['bldgclass'].replace('Q8', 'Q')
-    pluto['bldgclass'] = pluto['bldgclass'].replace(['Z4','Z5','Z9'], ['Z' for i in range(3)])
-
+    pluto =  pluto.replace({
+                    "splitzone": BinaryDict,
+                    "irrlotcode": BinaryDict,
+                    "ltdheight": LtdHeightDict,
+                    "builtcode": BuiltCodeDict,
+                    "histdist": NamedDistDict,
+                    "landmark": NamedDistDict},
+                    regex = True)
+                    
+    # Building Class - Use first character of BldgClass only
+    pluto.bldgclass = [x[0] for x in pluto.bldgclass]
 
     # Ext New Columns
-    pluto['garage'] = (pluto['ext']==('G' or 'EG'))*1
-    pluto['extension'] = (pluto['ext']==('E' or 'EG'))*1
+    pluto['garage'] = pluto_raw_queens.ext.replace(
+        {'G':1, 'EG':1, 'E':0, np.nan:0})
+    pluto['extension'] = pluto_raw_queens.ext.replace(
+        {'G':0, 'EG':1, 'E':1, np.nan:0})
 
     # Count Alterations
-    pluto['yearalter1'] = (pluto['yearalter1'] > 0)*1
-    pluto['yearalter2'] = (pluto['yearalter2'] > 0)*1
-    pluto['countalter'] = pluto['yearalter1'] + pluto['yearalter2']
+    pluto[pluto.yearalter1 > 0] = 1
+    pluto[pluto.yearalter2 > 0] = 1
+    pluto['countalter'] = pluto.yearalter1 + pluto.yearalter2
     pluto = pluto.drop(['ext', 'yearalter1', 'yearalter2'], axis=1)
 
-    # Round NumFloors and Log
-    pluto['numfloors'] = pluto['numfloors'].astype(float).round()
+    # Round NumFloors
+    pluto['numfloors'] = pluto['numfloors'].round()
     # Easements Binary
-    pluto['easements'] = (pluto['easements']>0)*1
-    # ProxCode set NaN
-    pluto['proxcode'] = pluto['proxcode'].replace(0,np.nan)
-    # BsmtCode Binary
-    pluto['bsmtcode'] = pluto['bsmtcode'].replace(5,np.nan)
-    pluto['bsmtcode'] = (pluto['bsmtcode'] > 0)*1
+    pluto[pluto.easements > 0] = 1
+    # ProxCode set NaN, BsmtCode Binary
+    pluto = pluto.replace({"proxcode": {0:np.nan},
+        "bsmtcode": {2:1, 3:1, 4:1, 5:0}})
 
     # Limit NumBldgs
-    pluto['numbldgs'] = ((pluto['numbldgs']<10)*1).replace(
-                            0,np.nan)* pluto['numbldgs']
+    pluto[pluto.numbldgs >= 10] = np.nan
     # Limit Front and Depth
-    pluto['lotfront'] = ((pluto['lotfront']<100)*1).replace(
-                            0,np.nan)* pluto['lotfront']
-    pluto['lotdepth'] = ((pluto['lotdepth']<200)*1).replace(
-                            0,np.nan)* pluto['lotdepth']
-    pluto['bldgfront'] = ((pluto['bldgfront']<100)*1).replace(
-                            0,np.nan)* pluto['bldgfront']
-    pluto['bldgdepth'] = ((pluto['bldgdepth']<200)*1).replace(
-                            0,np.nan)* pluto['bldgdepth']
+    pluto[pluto.lotfront >= 100] = np.nan
+    pluto[pluto.lotdepth >= 200] = np.nan
+    pluto[pluto.bldgfront >= 100] = np.nan
+    pluto[pluto.bldgdepth >= 200] = np.nan
     # Fix impossible years
-    pluto['yearbuilt'] = ((pluto['yearbuilt']<2016)*1).replace(
-                            0,np.nan)* pluto['yearbuilt']
+    pluto[(pluto.yearbuilt <= 0) | (pluto.yearbuilt > 2016)] = np.nan
     # Limit UnitRes and UnitsTotal
-    pluto['unitsres'] = ((pluto['unitsres']<100)*1).replace(
-                            0,np.nan)* pluto['unitsres']
-    pluto['unitstotal'] = ((pluto['unitstotal']<100)*1).replace(
-                            0,np.nan)* pluto['unitstotal']
+    pluto[pluto.unitsres >= 100] = np.nan
+    pluto[pluto.unitstotal >= 100] = np.nan
+
     return pluto
 
 
@@ -268,10 +230,12 @@ def read_in_dtm(boros, data_dir = 'data/dtm',
                'UNIT_LOT', 'UNIT_BBL', 'UNIT_DESIG']
     boro_names = ['manhattan', 'bronx', 'brooklyn', 'queens', 'statenisland']
     boro_codes = dict(zip(boro_names, range(1,6)))
-    dtm.unit_bbl = dtm.unit_bbl.astype('int64')
     dtm = pd.read_csv(os.path.join(data_dir, filename), usecols=columns)
-    dtm = dtm[dtm.CONDO_BORO.isin([boro_codes.get(boro) for boro in boros])]
     dtm.columns = [col.strip().lower() for col in dtm.columns]
+    dtm = dtm.dropna(subset = ['unit_bbl', 'condo_boro', 'condo_numb'])
+    dtm.unit_bbl = dtm.unit_bbl.astype(int)
+    dtm = dtm.loc[dtm.condo_boro.isin(
+        [boro_codes.get(boro) for boro in boros])]
     return dtm
 
 
@@ -328,27 +292,13 @@ def get_finance_condo_lot(pluto, finance, dtm):
 
     # Remove duplicate bbls by returning only the most recent sales data
     # for each BBL and year
-    finance_condo_updated = finance_condo_updated.reset_index()
+    finance_condo_updated = finance_condo_updated.reset_index(drop = True)
     finance_condo_updated["sale_year"] = [d.year for d in
         finance_condo_updated.sale_date]
     grouped = finance_condo_updated.groupby(['bbl_pluto', 'sale_year'])
     max_idx_by_bbl = grouped['sale_price'].idxmax().values
     finance_condo_updated = finance_condo_updated.loc[max_idx_by_bbl]
     return finance_condo_updated
-
-
-def bbl_dist_to_subway(data,
-        filepath = "data/open_nyc/subwaydist.csv"):
-    subwaydist = pd.read_csv(filepath)
-    subwaydist = subwaydist.drop(['latitude','longitude'], axis = 1)
-    return data.merge(subwaydist,how='left',left_on='bbl_pluto', right_on= 'bbl')
-
-
-def bbl_dist_to_open_NYC_data(data,
-        filepath = "data/open_nyc/some_dist_metrics.csv"):
-    other_distances = pd.read_csv(filepath)
-    other_distances = other_distances.drop(['latitude','longitude'], axis = 1)
-    return data.merge(other_distances,how='left',left_on='bbl_pluto', right_on= 'bbl')
 
 
 def merge_pluto_finance(pluto, finance, dtm):
@@ -375,10 +325,25 @@ def merge_pluto_finance(pluto, finance, dtm):
     buildings = pd.merge(pluto, finance_condo_updated, how='right',
         left_on='bbl', right_on = 'bbl_pluto',
         suffixes=['_pluto', '_finance'])
-    buildings["price_per_sqft"] = buildings["sale_price"].astype('float64') / buildings["gross_sqft_pluto"]
-    buildings = buildings[ buildings["price_per_sqft"].notnull()]
-    buildings = buildings[ buildings["price_per_sqft"] > 0.]
+    buildings["price_per_sqft"] = (buildings.sale_price.astype('float64') /
+        buildings.gross_sqft_pluto)
+    buildings = buildings[ buildings.price_per_sqft.notnull()]
+    buildings = buildings[ buildings.price_per_sqft > 0.]
     return buildings
+
+
+def bbl_dist_to_subway(data,
+        filepath = "data/open_nyc/subwaydist.csv"):
+    subwaydist = pd.read_csv(filepath)
+    subwaydist = subwaydist.drop(['latitude','longitude'], axis = 1)
+    return data.merge(subwaydist, how='left', on = ['bbl', 'zipcode'])
+
+
+def bbl_dist_to_open_NYC_data(data,
+        filepath = "data/open_nyc/some_dist_metrics.csv"):
+    other_distances = pd.read_csv(filepath)
+    other_distances = other_distances.drop(['latitude', 'longitude'], axis = 1)
+    return data.merge(other_distances, how='left', on = ['bbl', 'zipcode'])
 
 
 def make_dummy_variables(dataframe, feature):
@@ -406,7 +371,7 @@ def make_dummy_variables(dataframe, feature):
     return dummies
 
 
-def clean_categorical_vars(dataframe, list_of_cat_vars, boros, years, output_dir='data/merged'):
+def clean_categorical_vars(dataframe, list_of_cat_vars, boros, years):
     """Append the original dataframe with output of make_dummy_variables.
     This function also adds a binary column for each feature that has missing values.
     This binary column is 1 if value is missing.
@@ -423,13 +388,17 @@ def clean_categorical_vars(dataframe, list_of_cat_vars, boros, years, output_dir
         dummies = make_dummy_variables(dataframe, var)
         dataframe = pd.concat([dataframe, dummies], axis=1)
         dataframe = dataframe.drop(var, axis=1)
+    write_output(dataframe, boros, years)
+    return dataframe
+
+
+def write_output(data, boros, years, output_dir = 'data/merged'):
     boros.sort()
     output = "{output_dir}/{boros_joined}_{min_year}_{max_year}.csv".format(
         boros_joined = "_".join(boros), min_year = min(years),
         max_year = max(years), output_dir = output_dir)
     print("Writing output to file in {}".format(output))
-    dataframe.to_csv(output, index = False, chunksize=1e4)
-    return dataframe
+    data.to_csv(output, index = False, chunksize=1e4)
 
 
 def main():
@@ -457,9 +426,9 @@ def main():
     pluto = read_in_pluto(boros)
     print("Getting Finance data for: {} and {}".format(boros, years))
     finance = read_in_finance(boros, years)
-#finance.to_csv("finance_queens.csv", index = False)
     print("Getting DTM Condo Unit data for: {}".format(boros))
     dtm = read_in_dtm(boros)
+    print("Beginning merge...")
     buildings = merge_pluto_finance(pluto, finance, dtm)
 
     print("Merging with subway data")
@@ -467,13 +436,13 @@ def main():
     print("Merging with Open NYC distances")
     buildings = bbl_dist_to_open_NYC_data(buildings)
 
-    final_cols_to_remove = ['bbl_pluto','borocode','block','condono']
+    final_cols_to_remove = ['bbl_pluto', 'borocode', 'block', 'condono',
+        'sale_year', 'xcoord', 'ycoord', 'latitude', 'longitude']
     buildings = buildings.drop(final_cols_to_remove, axis=1)
     cat_vars = ['borough','schooldist','council','bldgclass','landuse',
         'ownertype','proxcode','lottype','tax_class_at_time_of_sale']
     buildings_with_cats = clean_categorical_vars(
         buildings, cat_vars, boros, years)
-
 
 
 if __name__ == '__main__':
