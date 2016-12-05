@@ -34,6 +34,9 @@ def main():
     boro_years_dsize['total']['total'] = sum([boro_years_dsize['total'][b]
         for b in boros])
 
+    print('All years: ', boros_dsize)
+    print('Year by year: ', boro_years_dsize['total'])
+
 
 if __name__ == '__main__':
     main()

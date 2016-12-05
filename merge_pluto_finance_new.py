@@ -23,18 +23,20 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
     initials = {"manhattan" : "MN", "brooklyn" : "BK", "bronx" : "BX",
         "queens" : "QN", "statenisland" : "SI"}
 
-    string_cols = ['BBL', 'BldgClass', 'Borough', 'BuiltCode', 'Council', 'Ext',
-        'HistDist', 'IrrLotCode', 'Landmark', 'LandUse', 'LotType', 'LtdHeight']
+    string_cols = ['BBL', 'BldgClass', 'Borough', 'BuiltCode', 'Council',
+        'Ext', 'HistDist', 'IrrLotCode', 'Landmark', 'LandUse', 'LotType',
+        'LtdHeight', 'OwnerType', 'ProxCode', 'SchoolDist', 'SplitZone']
     string_cols = {a: str for a in string_cols}
 
-    float_cols = ['BldgDepth', 'BldgFront', 'ComArea', 'LotDepth', 'LotFront',
-        'NumBldgs', 'NumFloors', 'XCoord', 'YCoord']
+    float_cols = ['BldgDepth', 'BldgFront', 'BsmtCode', 'ComArea',
+        'Easements', 'LotDepth', 'LotFront', 'NumBldgs', 'NumFloors',
+        'ResArea', 'UnitsRes', 'UnitsTotal', 'XCoord', 'YCoord',
+        'YearAlter1', 'YearAlter2', 'YearBuilt']
     float_cols = {a: np.float64 for a in float_cols}
 
-    int_cols = ['Block', 'BoroCode', 'BsmtCode', 'CondoNo', 'Easements',
-        'UnitsRes', 'UnitsTotal', 'YearAlter1', 'YearAlter2', 'YearBuilt']
+    int_cols = ['Block', 'BoroCode',  'CondoNo']
     int_cols = {a: np.int64 for a in int_cols}
-    
+
     cols_dtype = dict(string_cols, **float_cols)
     cols_dtype.update(int_cols)
 
@@ -289,7 +291,7 @@ def get_finance_condo_lot(pluto, finance, dtm):
         ['bbl_pluto', 'bbl_finance'])
     finance_condos_only = finance_condos_only.loc[lambda df:
             # np.floor(df.bbl_pluto / 1e4) == np.floor(df.bbl_finance / 1e4)]
-            x[0:6] == y[0:6] for x,y in (df.bbl_finance, df.bbl_pluto)
+            [x[0:6] == y[0:6] for x,y in zip(df.bbl_finance, df.bbl_pluto)]]
 
     # get a list of bbls that are not condos (same in pluto and finance)
     standard_bbls = list(set(finance.bbl).difference(
