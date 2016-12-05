@@ -183,6 +183,7 @@ def add_BBL(data, copy = True):
     else:
         processed_data = data
 
+    processed_data = processed_data.reset_index(drop = True)
     # Extract the borough, block, and lot, and create a 10-digit code
     # zero-padded code from these three columns in order
     bbl_columns = processed_data[["borough", "block", "lot"]].itertuples()
@@ -214,9 +215,9 @@ def read_in_finance(boros, years, data_dir = "data/finance_sales"):
             boro_year.dropna(how = 'all', inplace = True)
             finance = finance.append(boro_year)
     finance = add_BBL(finance)
-    finance = finance[['sale_price','sale_date','tax_class_at_time_of_sale',
-            'year_built','residential_units', 'commercial_units', 'total_units',
-            'block','bbl']]
+    finance = finance.loc[:, ['block', 'bbl', 'sale_price',  'sale_date',
+        'tax_class_at_time_of_sale', 'residential_units', 'commercial_units',
+        'total_units']]
     return finance
 
 
