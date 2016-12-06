@@ -3,6 +3,7 @@ import numpy as np
 import math
 from sklearn import model_selection
 from argparse import ArgumentParser
+from sklearn import preprocessing
 
 '''
 Module to do final cleaning and train/test split of the data before modeling.
@@ -66,6 +67,14 @@ def fill_na(data_train, data_test):
     '''
     data_train = data_train.apply(lambda x: x.fillna(x.mean()),axis=0)
     data_test = data_test.apply(lambda x: x.fillna(x.mean()),axis=0)
+    return data_train, data_test
+
+
+def normalize(data_train, data_test):
+    '''Transforms features by scaling each feature to (0,1) range.'''
+    min_max_scaler = preprocessing.MinMaxScaler()
+    data_train = min_max_scaler.fit_transform(data_train)
+    data_test = min_max_scaler.transform(data_test)
     return data_train, data_test
 
 

@@ -110,6 +110,9 @@ def main():
     data_train, data_test = fill_na(data_train, data_test)
 
     print("Creating target variable")
+    X_train, X_test = normalize(data_train, data_test)
+    
+    print("Normalizing data")
     X_train, X_test, y_train, y_test = create_target_var(data_train, data_test, 'price_per_sqft')
     if model_type == 'lr':
         print("Fitting Linear Regression model")
