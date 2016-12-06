@@ -58,6 +58,7 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
 
 
 def clean_pluto(pluto):
+    pluto = pluto.reset_index(drop=True)
     # Convert xcoord and ycoord columns to latitude and longitudes
     pluto = convert_df(pluto, 'xcoord', 'ycoord')
 
@@ -168,27 +169,21 @@ def read_in_boro_year_data(boro, year, data_dir = "data/finance_sales"):
     return data
 
 
-def add_BBL(data, copy = True):
+def add_BBL(processed_data):
     """
     Takes a raw dataframe and adds the BBL code (Borough, Block, Lot)
     Args:
         Pandas DataFrame data: raw data frame to append the "bbl" and
-        boolean copy: whether to make a copy or alter the dataframe in place
     Returns:
         Pandas DataFrame
     """
-    # Copy the data frame to a new object if desired
-    if copy:
-        processed_data = data.copy()
-    else:
-        processed_data = data
-
     processed_data = processed_data.reset_index(drop = True)
     # Extract the borough, block, and lot, and create a 10-digit code
     # zero-padded code from these three columns in order
     bbl_columns = processed_data[["borough", "block", "lot"]].itertuples()
-    bbl_formatted = pd.Series(["%01d%05d%04d" % (row.borough, row.block,
-        row.lot) for row in bbl_columns], dtype='int64')
+    bbl_formatted = pd.Series(["%01d%05d%04d" %
+        (row.borough, row.block, row.lot) for row in bbl_columns],
+        index = processed_data.index, dtype='int64')
     processed_data["bbl"] = bbl_formatted.astype(str)
     return processed_data
 
@@ -307,7 +302,7 @@ def get_finance_condo_lot(pluto, finance, dtm):
     # finance condo updated: remove bbl/block/bbl_finance
     # retain only bbl_pluto to match with pluto.bbl in merge
     finance_condo_updated = finance_condo_updated.drop(
-        ['block','bbl', 'bbl_finance'], axis=1)
+        ['bbl', 'block', 'bbl_finance'], axis=1) # bbl, block, bbl_finance
 
     # Remove duplicate bbls by returning only the most recent sales data
     # for each BBL and year
@@ -458,7 +453,7 @@ def main():
     buildings = bbl_dist_to_open_NYC_data(buildings)
 
     final_cols_to_remove = ['bbl_pluto', 'borocode', 'block', 'condono',
-        'sale_year', 'xcoord', 'ycoord', 'latitude', 'longitude']
+        'sale_year', 'xcoord', 'ycoord']
     buildings = buildings.drop(final_cols_to_remove, axis=1)
     cat_vars = ['borough', 'schooldist', 'council', 'bldgclass', 'landuse',
         'ownertype', 'proxcode', 'lottype', 'tax_class_at_time_of_sale']
