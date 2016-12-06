@@ -7,8 +7,10 @@ from scipy import optimize
 import time
 from sklearn import preprocessing, model_selection, svm, metrics, tree
 from sklearn.metrics import *
+
 from sklearn.preprocessing import StandardScaler, Imputer
 from sklearn.model_selection import train_test_split, KFold, GridSearchCV
+
 
 from sklearn.ensemble import AdaBoostRegressor, BaggingRegressor,
     ExtraTreesRegressor, RandomForestRegressor, GradientBoostingRegressor
@@ -35,10 +37,36 @@ print('{:.2} seconds elapsed'.format(time.time() - self.tstart))
 def define_model_params():
     mods = {
         'lr' = linear_model.LinearRegression(),
-        'rf' = RandomForestRegressor(n_estimators=100, n_jobs = -1)
-    }
+        'rf' = RandomForestRegressor(n_estimators=50, n_jobs = -1)
+        'ada' = AdaBoostRegressor(n_estimators=50)
+        'bag' = BaggingRegressor(n_estimators=50, n_jobs=-1)
+        'et' = ExtraTreesRegressor(n_estimators=50, n_jobs=-1)
+        'gb' = GradientBoostingRegressor(n_estimators=50, n_jobs=-1)
+        'el' = ElasticNetCV(n_jobs=-1)
+        'hr' = HuberRegressor()
+        'br' = BayesianRidge(n_iter=300)
+        'llcv' = LassoLarsCV(n_jobs=-1)
+        'lcv' = LassoCV(n_jobs=-1)
+        'rcv' = RidgeCV()
+        'sgd' = SGDRegressor()
+        'svr' = SVR()
+        'linsvr' = LinearSVR()
+}
 
-    params = {
+params = {'rf': {"max_depth": [1,3,5,10,20,50,100],"max_features": [0.3,0.4,0.6, 0.8],"min_samples_split": [1, 3, 10, 20],"min_samples_leaf": [1, 10, 20, 30],"bootstrap": ['True', 'False'],"criterion": ["gini", "entropy"]},
+    'ada' : {"learning_rate": [0.1, 0.5, 1.0, 1.5], "loss" : ["linear", "square","exponential"]},
+    'bag' : {"max_features": [0.3,0.5,0.8,1.0], "max_samples": [0.3, 0.5, 1.0], "bootstrap_features":['True','False']}
+    'et' : {"max_features": [0.5,0.8,'auto','sqrt'], "max_depth": [1,3,5,10,20,50,100], "min_samples_leaf": [1, 10, 20, 30],"min_samples_split": [1, 3, 10, 20]},
+    'gb' : {"loss":["ls", "lad", "huber"], "learning_rate": [0.1, 0.2, 0.5, 1.0], "max_depth": [1,3,5,10,20,50,100], "max_features": [0.3,0.4,0.8], "min_samples_split": [1, 3, 10, 20],"min_samples_leaf": [1, 10, 20, 30]},
+    'el' : {"l1_ratio": [0.5, 0.7, 0.9, 1.0], "eps": [0.0005, 0.001, 0.005]},
+    'hr' : {"epsilon":[1.35, 1.6, 2.0, 2.5], "alpha" : [0.0001, 0.001, 0.005]}
+    'br' : {"alpha_1":[1e-06, 1e-05],"alpha_2":[1e-06, 1e-05], "lambda_1":[1e-06, 1e-05], "lambda_1":[1e-06, 1e-05]},
+    'llcv' : {"eps": [2.2204460492503131e-16]},
+    'lcv' : {"eps" : [1e-4, 1e-3, 1e-2]},
+    'rcv' : {"gcv_mode": ["None","auto","svd","eigen"]},
+    'sgd' : {"loss" : ["squared_loss", "huber","epsilon_insensitive"], "penalty" : ["none","12","l1","elasticnet"], "alpha" : ["optimal"], "learning_rate" : ["optimal"]},
+    'svr' : {"C": [0.0001,0.001,0.01,0.1,1,10], "kernel": ['rbf','poly','sigmoid'], "epsilon" : [0.05, 0.1, 0.2, 0.5]},
+    'linsvr' = {"C": [0.0001,0.001,0.01,0.1,1,10], "dual": ['True','False'], "epsilon" : [0.05, 0.1, 0.2, 0.5]}
 
     }
     return mods, params
