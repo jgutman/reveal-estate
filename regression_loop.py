@@ -144,7 +144,7 @@ def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
             model_name = models_to_run[index]
             parameter_values = params[model_name]
             param_size = [len(a) for a in parameter_values.values()]
-            param_size = min(np.prod(param_size), 2) # change back to 50 for true run
+            param_size = min(np.prod(param_size), 1) # change back to 50 for true run
             with Timer(model_name) as t:
                 estimators = RandomizedSearchCV(model, parameter_values,
                     scoring = criterion, n_jobs = -1, cv = cv_folds,
@@ -188,7 +188,7 @@ def main():
         data_path = "data/merged/individual/bronx_2010_2010.csv")
     args = parser.parse_args()
     
-    # LR, ElasticNet, HuberRegressor, BayesianRidge, LassoLars
+    # LR, ElasticNet, HuberRegressor, BayesianRidge, LassoLars, Lasso, Ridge
     # taking a very long time
     model_type, data_path = args.model_type, args.data_path
     model_type = [m.lower() for m in model_type]
@@ -213,7 +213,6 @@ def main():
 
     print("Fitting models")
     mods, params = define_model_params()
-    print(model_type)
     model_results, model = model_loop(model_type, mods, params,
         X_train, X_test, y_train, y_test)
     # write out predictions to file
