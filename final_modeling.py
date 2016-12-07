@@ -16,7 +16,6 @@ sns.set(color_codes=True)
 
 import warnings
 
-
 def create_target_var(data_train, data_test, target_name):
     '''
     Separates X and y variables for training and testing data.
@@ -30,8 +29,8 @@ def create_target_var(data_train, data_test, target_name):
         y_train: Target variable for X_train.
         y_test: Target varibale for X_test.
     '''
-
-    cols = list(data_train.columns.values) #Make a list of all of the columns in data_train
+    # Make a list of all of the columns in data_train
+    cols = list(data_train.columns.values)
     cols.pop(cols.index(target_name))
     # Put target at the end of data_train
     data_train = data_train[cols+[target_name]]
@@ -79,10 +78,6 @@ def fit_RF(X_train, X_test, y_train, y_test):
     return RF_reg_final
 
 
-#def visualize_feature_importance(model):
-    #print()
-
-
 def main():
     warnings.filterwarnings("ignore")
     # Set up input option parsing for model type and data path
@@ -101,8 +96,8 @@ def main():
     print("Reading in data from %s" % data_path)
     df = pd.read_csv(data_path, low_memory = True)
     # drop columns that are not needed or are redundant
-    df = drop_cols(df, ['zonemap','sale_date','sale_price','year_built','latitude','longitude','bbl','bbl_x','bbl_y','public_recycling_bins_dist'])
-    df = as_float(df)
+    df = df.drop(['sale_date', 'sale_price', 'latitude', 'longitude', 'bbl', 'public_recycling_bins_dist'], axis = 1)
+    df = df.astype(float)
 
     print("Splitting data into training and test sets")
     data_train, data_test = split_data(df)
@@ -111,7 +106,7 @@ def main():
 
     print("Creating target variable")
     X_train, X_test = normalize(data_train, data_test)
-    
+
     print("Normalizing data")
     X_train, X_test, y_train, y_test = create_target_var(data_train, data_test, 'price_per_sqft')
     if model_type == 'lr':
