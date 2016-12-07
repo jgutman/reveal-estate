@@ -7,16 +7,19 @@ from scipy import optimize
 import time
 from sklearn import preprocessing, model_selection, svm, metrics, tree
 from sklearn.metrics import *
-from sklearn.model_selection import train_test_split, KFold, GridSearchCV
+from sklearn.model_selection import KFold, GridSearchCV, RandomizedSearchCV
+
 
 from sklearn.ensemble import AdaBoostRegressor, BaggingRegressor, \
     ExtraTreesRegressor, RandomForestRegressor, GradientBoostingRegressor
-from sklearn.linear_model import ElasticNetCV, HuberRegressor, \
-    BayesianRidge, LassoLarsCV, LassoCV, RidgeCV, SGDRegressor
+from sklearn.linear_model import ElasticNet, HuberRegressor, \
+    BayesianRidge, LassoLars, Lasso, Ridge, SGDRegressor, LinearRegression
 from sklearn.svm import SVR, LinearSVR
 
 from argparse import ArgumentParser
 import warnings
+import final_modeling as fm
+import final_data_clean as dc
 
 class Timer(object):
     def __init__(self, name=None):
@@ -36,18 +39,18 @@ class Timer(object):
 
 def define_model_params():
     mods = {
-        'lr': linear_model.LinearRegression(),
-        'rf': RandomForestRegressor(n_estimators=50, n_jobs=-1),
+        'lr': LinearRegression(),
+        'rf': RandomForestRegressor(n_estimators=50),
         'ada': AdaBoostRegressor(n_estimators=50),
-        'bag': BaggingRegressor(n_estimators=50, n_jobs=-1),
-        'et': ExtraTreesRegressor(n_estimators=50, n_jobs=-1),
-        'gb': GradientBoostingRegressor(n_estimators=50, n_jobs=-1),
-        'el': ElasticNetCV(n_jobs=-1),
+        'bag': BaggingRegressor(n_estimators=50),
+        'et': ExtraTreesRegressor(n_estimators=50),
+        'gb': GradientBoostingRegressor(n_estimators=50),
+        'el': ElasticNet(),
         'hr': HuberRegressor(),
         'br': BayesianRidge(n_iter=300),
-        'llcv': LassoLarsCV(n_jobs=-1),
-        'lcv': LassoCV(n_jobs=-1),
-        'rcv': RidgeCV(),
+        'll': LassoLars(),
+        'lasso': Lasso(),
+        'ridge': Ridge(),
         'sgd': SGDRegressor(),
         'svr': SVR(),
         'linsvr': LinearSVR()
@@ -59,8 +62,7 @@ def define_model_params():
             "max_features": [0.3, 0.4, 0.6, 0.8],
             "min_samples_split": [1, 3, 10, 20],
             "min_samples_leaf": [1, 10, 20, 30],
-            "bootstrap": ["True", "False"],
-            "criterion": ["gini", "entropy"]},
+            "bootstrap": ["True", "False"]},
         'ada' : {
             "learning_rate": [0.1, 0.5, 1.0, 1.5],
             "loss" : ["linear", "square", "exponential"]},
@@ -91,10 +93,11 @@ def define_model_params():
             "alpha_2": [1e-06, 1e-05],
             "lambda_1": [1e-06, 1e-05],
             "lambda_2": [1e-06, 1e-05]},
-        'lcv' : {
-            "eps": [1e-4, 1e-3, 1e-2]},
-        'rcv' : {
-            "gcv_mode": ["None", "auto", "svd", "eigen"]},
+        'lasso' : {
+            "alpha": np.logspace(-6, 3, 15),
+            "selection": ["random", "cyclic"]},
+        'ridge' : {
+            "alpha": np.logspace(-6, 3, 15)},
         'sgd' : {
             "loss": ["squared_loss", "huber", "epsilon_insensitive"],
             "penalty": ["none", "12", "l1", "elasticnet"],
@@ -107,12 +110,14 @@ def define_model_params():
         'linsvr' : {
             "C": [0.0001, 0.001, 0.01, 0.1, 1, 10],
             "dual": ["True", "False"],
-            "epsilon": [0.05, 0.1, 0.2, 0.5]}
+            "epsilon": [0.05, 0.1, 0.2, 0.5]},
+        'll' : {},
+        'lr' : {}
     }
     return mods, params
 
 def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
-    criterion = 'mean_squared_error', cv_folds = 10):
+    criterion = 'mean_squared_error', cv_folds = 5):
     """
     Returns a dictionary where the keys are model nicknames (strings)
     and the values are regressors with methods predict and fit
@@ -138,9 +143,12 @@ def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
         for index, model in enumerate([mods[x] for x in models_to_run]):
             model_name = models_to_run[index]
             parameter_values = params[model_name]
+            param_size = [len(a) for a in parameter_values.values()]
+            param_size = min(np.prod(param_size), 10)
             with Timer(model_name) as t:
-                estimators = GridSearchCV(model, parameter_values,
-                    scoring = criterion, n_jobs = -1, cv = cv_folds)
+                estimators = RandomizedSearchCV(model, parameter_values,
+                    scoring = criterion, n_jobs = -1, cv = cv_folds,
+                    random_state = 300, n_iter = param_size)
                 estimators.fit(X_train, y_train)
                 print("Best estimator found by grid search:")
                 print(estimators.best_estimator_)
@@ -161,7 +169,6 @@ def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
                     'cv_score': cv_score,
                     'test_score': test_score,
                     'hyperparams': hyperparams,
-                    'test_features': X_test,
                     'predictions': y_pred
                 }
     return model_grid_results, estimators.best_estimator_
@@ -181,29 +188,32 @@ def main():
         data_path = "data/merged/individual/bronx_2010_2010.csv")
     args = parser.parse_args()
     model_type, data_path = args.model_type, args.data_path
-    model_type = model_type.lower()
+    model_type = [m.lower() for m in model_type]
     output_dir = "data/results"
 
     print("Reading in data from %s" % data_path)
-    data = get_data_for_model(data_path)
+    data = fm.get_data_for_model(data_path)
 
     print("Creating target variable")
-    X, y = create_target_var(data, 'price_per_sqft')
+    X, y = fm.create_target_var(data, 'price_per_sqft')
 
     print("Splitting data into training and test sets")
-    X_train, X_test, y_train, y_test = split_data(X, y)
+    X_train, X_test, y_train, y_test = dc.split_data(X, y)
     print("Train: %s, Test: %s" % (X_train.shape, X_test.shape))
     print("Train y: %s, Test y: %s" % (y_train.shape, y_test.shape))
 
     print("Imputing missing values")
-    X_train, X_test = fill_na(X_train, X_test)
+    X_train, X_test = dc.fill_na(X_train, X_test)
 
     print("Normalizing data")
-    X_train, X_test = normalize(X_train, X_test)
+    X_train, X_test = dc.normalize(X_train, X_test)
 
     mods, params = define_model_params()
     model_results, model = model_loop(model_type, mods, params,
         X_train, X_test, y_train, y_test)
+    # write out predictions to file
+    # write out results
+    print(model_results)
 
 
 if __name__ == '__main__':
