@@ -100,5 +100,4 @@ def extract_affected_properties(df, path_to_bbls):
     df_minus_properties.reset_index(drop=True, inplace=True)
     print(df.shape)
     print(df_minus_properties.shape)
-    df_minus_properties = df_minus_properties.drop(['bbl'], axis=1)
     return affected_properties, df_minus_properties

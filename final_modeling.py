@@ -39,7 +39,7 @@ def get_data_for_model(data_path = \
         'bronx_brooklyn_manhattan_queens_statenisland_2003_2016.csv'):
     df = pd.read_csv(data_path, low_memory = True)
     # drop columns that are not needed or are redundant
-    df = drop_cols(df, ['sale_date', 'sale_price', 'latitude', 'longitude', 'public_recycling_bins_dist'])
+    df = drop_cols(df, ['bbl','sale_date', 'sale_price', 'latitude', 'longitude', 'public_recycling_bins_dist'])
     return df
 
 
@@ -92,11 +92,13 @@ def main():
     args = parser.parse_args()
     model_type, data_path = args.model_type, args.data_path
     model_type = model_type.lower()
-
+    
+    affected_properties, data = extract_affected_properties(data, "data/subway_bbls/Queens Light Rail BBL.csv")
+    
     print("Reading in data from %s" % data_path)
     data = get_data_for_model(data_path)
     
-    affected_properties, data = extract_affected_properties(data, "data/subway_bbls/Queens Light Rail BBL.csv")
+    
     
     print("Creating target variable")
     X, y = create_target_var(data, 'price_per_sqft')

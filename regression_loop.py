@@ -96,12 +96,12 @@ def define_model_params():
         'lasso' : {
             "alpha": np.logspace(-6, 3, 15),
             "selection": ["random", "cyclic"]},
+
         'ridge' : {
             "alpha": np.logspace(-6, 3, 15)},
         'sgd' : {
             "loss": ["squared_loss", "huber", "epsilon_insensitive"],
             "penalty": ["none", "12", "l1", "elasticnet"],
-            "alpha": ["optimal"],
             "learning_rate": ["optimal"]},
         'svr' : {
             "C": [0.0001, 0.001, 0.01, 0.1, 1, 10],
@@ -109,7 +109,6 @@ def define_model_params():
             "epsilon": [0.05, 0.1, 0.2, 0.5]},
         'linsvr' : {
             "C": [0.0001, 0.001, 0.01, 0.1, 1, 10],
-            "dual": ["True", "False"],
             "epsilon": [0.05, 0.1, 0.2, 0.5]},
         'll' : {},
         'lr' : {}
@@ -188,7 +187,7 @@ def main():
         data_path = "data/merged/individual/bronx_2010_2010.csv")
     args = parser.parse_args()
     
-    # LR, ElasticNet, HuberRegressor, BayesianRidge, LassoLars, Lasso, Ridge
+    # LR, ElasticNet, HuberRegressor, BayesianRidge, LassoLars, Lasso, Ridge, SGD, LinearSVR
     # taking a very long time
     model_type, data_path = args.model_type, args.data_path
     model_type = [m.lower() for m in model_type]

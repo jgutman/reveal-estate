@@ -8,6 +8,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
 from argparse import ArgumentParser
 from final_data_clean import *
+from final_modeling import *
 
 
 
@@ -37,6 +38,19 @@ def prepare_data(df_orig, df_updated_subways):
     X_orig, X_updated = normalize(X_orig, X_updated)
 
     return X_orig, X_updated, y_orig
+
+
+def retain_bbl
+
+def make_prediction(X_orig, X_updated, y_orig, model):
+    '''
+    Predicts price_per_sqft for the dataframe with updated subway information, and creates
+    Pandas dataframe with
+        
+    '''
+    predicted = model.predict(X_updated)
+
+
 
 
 
