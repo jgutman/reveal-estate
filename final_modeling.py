@@ -4,8 +4,6 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from sklearn import datasets, linear_model
-#from sklearn import model_selection
-from sklearn import model_selection as cross_validation
 from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
 from argparse import ArgumentParser
@@ -13,8 +11,8 @@ from final_data_clean import *
 
 import seaborn as sns
 sns.set(color_codes=True)
-
 import warnings
+
 
 def create_target_var(data_train, data_test, target_name):
     '''
@@ -36,13 +34,22 @@ def create_target_var(data_train, data_test, target_name):
     data_train = data_train[cols+[target_name]]
     # Put target at the end of data_test
     data_test = data_test[cols+[target_name]]
+
     X_train = data_train.ix[:,:-1]
     y_train = data_train.ix[:,-1]
     X_test = data_test.ix[:,:-1]
     y_test = data_test.ix[:,-1]
-
     return X_train, X_test, y_train, y_test
 
+
+def get_data_for_model(data_path = \
+        'bronx_brooklyn_manhattan_queens_statenisland_2003_2016.csv'):
+    df = pd.read_csv(data_path, low_memory = True)
+    # drop columns that are not needed or are redundant
+    df = drop_cols(df, ['sale_date', 'sale_price', 'latitude', 'longitude',
+        'bbl', 'public_recycling_bins_dist'])
+    df = df.astype(float)
+    return(df)
 
 
 def fit_LR(X_train, X_test, y_train, y_test):
@@ -67,6 +74,7 @@ def fit_LR(X_train, X_test, y_train, y_test):
     print('\nAccuracy (within 10% of true value): ', acc)
     return regr
 
+
 def fit_RF(X_train, X_test, y_train, y_test):
     RF_reg_final = RandomForestRegressor(n_estimators=100, n_jobs = -1)
     RF_reg_final.fit(X_train, y_train)
@@ -80,6 +88,7 @@ def fit_RF(X_train, X_test, y_train, y_test):
 
 def main():
     warnings.filterwarnings("ignore")
+
     # Set up input option parsing for model type and data path
     parser = ArgumentParser(description =
         "Model type (Linear Regression LR or Random Forest RF)")
@@ -88,27 +97,29 @@ def main():
     parser.add_argument("--data", dest="data_path",type = str,
         help="Path to csv file on which you want to fit a model.")
     parser.set_defaults(model_type = 'lr',
-        data_path = "data/merged/bronx_2010_2010.csv")
+        data_path = "data/merged/individual/bronx_2010_2010.csv")
     args = parser.parse_args()
     model_type, data_path = args.model_type, args.data_path
     model_type = model_type.lower()
     output_dir = "data/merged"
+
     print("Reading in data from %s" % data_path)
-    df = pd.read_csv(data_path, low_memory = True)
-    # drop columns that are not needed or are redundant
-    df = df.drop(['sale_date', 'sale_price', 'latitude', 'longitude', 'bbl', 'public_recycling_bins_dist'], axis = 1)
-    df = df.astype(float)
+    df = get_data_for_model(data_path)
 
     print("Splitting data into training and test sets")
     data_train, data_test = split_data(df)
-    print("Cleaning data train and data test: %s, %s" % (data_train.shape, data_test.shape))
+
+    print("Cleaning data train and data test: %s, %s" %
+        (data_train.shape, data_test.shape))
     data_train, data_test = fill_na(data_train, data_test)
 
     print("Creating target variable")
-    X_train, X_test = normalize(data_train, data_test)
+    X_train, X_test, y_train, y_test = create_target_var(
+        data_train, data_test, 'price_per_sqft')
 
     print("Normalizing data")
-    X_train, X_test, y_train, y_test = create_target_var(data_train, data_test, 'price_per_sqft')
+    X_train, X_test = normalize(X_train, X_test)
+
     if model_type == 'lr':
         print("Fitting Linear Regression model")
         linear_reg = fit_LR(X_train, X_test, y_train, y_test)

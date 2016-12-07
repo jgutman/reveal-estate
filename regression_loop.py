@@ -7,10 +7,7 @@ from scipy import optimize
 import time
 from sklearn import preprocessing, model_selection, svm, metrics, tree
 from sklearn.metrics import *
-
-from sklearn.preprocessing import StandardScaler, Imputer
 from sklearn.model_selection import train_test_split, KFold, GridSearchCV
-
 
 from sklearn.ensemble import AdaBoostRegressor, BaggingRegressor, \
     ExtraTreesRegressor, RandomForestRegressor, GradientBoostingRegressor
