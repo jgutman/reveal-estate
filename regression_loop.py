@@ -15,6 +15,9 @@ from sklearn.linear_model import ElasticNetCV, HuberRegressor, \
     BayesianRidge, LassoLarsCV, LassoCV, RidgeCV, SGDRegressor
 from sklearn.svm import SVR, LinearSVR
 
+from argparse import ArgumentParser
+import warnings
+
 class Timer(object):
     def __init__(self, name=None):
         self.name = name
@@ -114,6 +117,7 @@ def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
     Returns a dictionary where the keys are model nicknames (strings)
     and the values are regressors with methods predict and fit
 
+    Args:
     :param dict(str:estimator) mods: models as returned by define_model_params
     :param dict(str:dict) params: grid of regressor hyperparameter options
         to grid search over as returned by define_model_params
@@ -126,6 +130,8 @@ def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
         (e.g. ['ridge', 'RF'])
     :param string criterion: evaluation criterion for model selection on the
         validation set, (e.g. 'mean_squared_error')
+    Returns:
+        dictionary + model
     """
     model_grid_results = {}
     with Timer('model comparison loop') as qq:
@@ -158,4 +164,47 @@ def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
                     'test_features': X_test,
                     'predictions': y_pred
                 }
-    return model_grid_results
+    return model_grid_results, estimators.best_estimator_
+
+
+def main():
+    warnings.filterwarnings("ignore")
+
+    # Set up input option parsing for model type and data path
+    parser = ArgumentParser(description =
+        "Model type (Linear Regression LR or Random Forest RF)")
+    parser.add_argument("--model", dest = "model_type", nargs="*",
+        help = "Defines the type of model to be built. Acceptable options include LR (linear regression), RF (random forest), and several others. Not case sensitive")
+    parser.add_argument("--data", dest = "data_path",
+        help = "Path to csv file on which you want to fit a model.")
+    parser.set_defaults(model_type = 'lr',
+        data_path = "data/merged/individual/bronx_2010_2010.csv")
+    args = parser.parse_args()
+    model_type, data_path = args.model_type, args.data_path
+    model_type = model_type.lower()
+    output_dir = "data/results"
+
+    print("Reading in data from %s" % data_path)
+    data = get_data_for_model(data_path)
+
+    print("Creating target variable")
+    X, y = create_target_var(data, 'price_per_sqft')
+
+    print("Splitting data into training and test sets")
+    X_train, X_test, y_train, y_test = split_data(X, y)
+    print("Train: %s, Test: %s" % (X_train.shape, X_test.shape))
+    print("Train y: %s, Test y: %s" % (y_train.shape, y_test.shape))
+
+    print("Imputing missing values")
+    X_train, X_test = fill_na(X_train, X_test)
+
+    print("Normalizing data")
+    X_train, X_test = normalize(X_train, X_test)
+
+    mods, params = define_model_params()
+    model_results, model = model_loop(model_type, mods, params,
+        X_train, X_test, y_train, y_test)
+
+
+if __name__ == '__main__':
+    main()

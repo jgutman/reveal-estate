@@ -14,32 +14,25 @@ sns.set(color_codes=True)
 import warnings
 
 
-def create_target_var(data_train, data_test, target_name):
+def create_target_var(data, target_name):
     '''
-    Separates X and y variables for training and testing data.
+    Separates X and y variables for data.
     Args:
-        data_train: Pandas dataframe containing training data.
-        data_test: Pandas dataframe containing test data.
+        data: Pandas dataframe containing all data.
         target_name: column name of target variable
     Returns:
-        X_train: Pandas dataframe with training features.
-        X_test: Pandas dataframe with same features as X_train.
-        y_train: Target variable for X_train.
-        y_test: Target varibale for X_test.
+        X: Pandas dataframe with training features
+        y: Target variable for X as Pandas series.
     '''
-    # Make a list of all of the columns in data_train
-    cols = list(data_train.columns.values)
-    cols.pop(cols.index(target_name))
-    # Put target at the end of data_train
-    data_train = data_train[cols+[target_name]]
-    # Put target at the end of data_test
-    data_test = data_test[cols+[target_name]]
-
-    X_train = data_train.ix[:,:-1]
-    y_train = data_train.ix[:,-1]
-    X_test = data_test.ix[:,:-1]
-    y_test = data_test.ix[:,-1]
-    return X_train, X_test, y_train, y_test
+    # Convert int64 to float64
+    data = data.astype(float)
+    # Drop NaN for crucial columns
+    data = data.replace({np.Inf:np.nan, -np.Inf:np.nan})
+    data = data.dropna(how = 'any', subset = [target_name])
+    # Split data into X and y
+    X = data.drop(target_name, axis=1)
+    y = data.loc[:,target_name]
+    return X, y
 
 
 def get_data_for_model(data_path = \
@@ -48,8 +41,7 @@ def get_data_for_model(data_path = \
     # drop columns that are not needed or are redundant
     df = drop_cols(df, ['sale_date', 'sale_price', 'latitude', 'longitude',
         'bbl', 'public_recycling_bins_dist'])
-    df = df.astype(float)
-    return(df)
+    return df
 
 
 def fit_LR(X_train, X_test, y_train, y_test):
@@ -101,21 +93,20 @@ def main():
     args = parser.parse_args()
     model_type, data_path = args.model_type, args.data_path
     model_type = model_type.lower()
-    output_dir = "data/merged"
 
     print("Reading in data from %s" % data_path)
-    df = get_data_for_model(data_path)
-
-    print("Splitting data into training and test sets")
-    data_train, data_test = split_data(df)
-
-    print("Cleaning data train and data test: %s, %s" %
-        (data_train.shape, data_test.shape))
-    data_train, data_test = fill_na(data_train, data_test)
+    data = get_data_for_model(data_path)
 
     print("Creating target variable")
-    X_train, X_test, y_train, y_test = create_target_var(
-        data_train, data_test, 'price_per_sqft')
+    X, y = create_target_var(data, 'price_per_sqft')
+
+    print("Splitting data into training and test sets")
+    X_train, X_test, y_train, y_test = split_data(X, y)
+    print("Train: %s, Test: %s" % (X_train.shape, X_test.shape))
+    print("Train y: %s, Test y: %s" % (y_train.shape, y_test.shape))
+
+    print("Imputing missing values")
+    X_train, X_test = fill_na(X_train, X_test)
 
     print("Normalizing data")
     X_train, X_test = normalize(X_train, X_test)
