@@ -76,3 +76,29 @@ def normalize(X_train, X_test):
     X_train = min_max_scaler.fit_transform(X_train)
     X_test = min_max_scaler.transform(X_test)
     return X_train, X_test
+
+
+def extract_affected_properties(df, path_to_bbls):
+    '''
+    Extracts the properties affected by a subway line, based on bbl.
+        
+    Args:
+        df: Pandas dataframe
+        path_to_bbls: path to a csv file that contains the affected bbls.
+    Returns:
+        affected_properties: Pandas dataframe 
+        df: Pandas dataframe without the affected properties
+    
+    '''
+    bbls = []
+    file = open(path_to_bbls, 'rb')
+    for line in file:
+        bbls.append(line)
+    bbls = [float(i) for i in bbls]
+    affected_properties = df.loc[df['bbl'].isin(bbls)]
+    print(df.shape)
+    df = df - affected_properties
+    df = df.drop(['bbl'], axis=1)
+    print(df.shape)
+    print(affected_properties.shape)
+    return affected_properties, df
