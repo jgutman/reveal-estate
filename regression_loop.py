@@ -144,7 +144,7 @@ def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
             model_name = models_to_run[index]
             parameter_values = params[model_name]
             param_size = [len(a) for a in parameter_values.values()]
-            param_size = min(np.prod(param_size), 10)
+            param_size = min(np.prod(param_size), 50) # change to 10 for debug
             with Timer(model_name) as t:
                 estimators = RandomizedSearchCV(model, parameter_values,
                     scoring = criterion, n_jobs = -1, cv = cv_folds,
