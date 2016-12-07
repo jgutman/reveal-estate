@@ -96,9 +96,9 @@ def extract_affected_properties(df, path_to_bbls):
         bbls.append(line)
     bbls = [float(i) for i in bbls]
     affected_properties = df.loc[df['bbl'].isin(bbls)]
+    df_minus_properties = df[~df.index.isin(affected_properties.index)]
+    df_minus_properties.reset_index(drop=True, inplace=True)
     print(df.shape)
-    df = df - affected_properties
-    df = df.drop(['bbl'], axis=1)
-    print(df.shape)
-    print(affected_properties.shape)
-    return affected_properties, df
+    print(df_minus_properties.shape)
+    df_minus_properties = df_minus_properties.drop(['bbl'], axis=1)
+    return affected_properties, df_minus_properties

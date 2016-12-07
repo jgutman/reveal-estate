@@ -45,9 +45,9 @@ def define_model_params():
         'bag': BaggingRegressor(n_estimators=50),
         'et': ExtraTreesRegressor(n_estimators=50),
         'gb': GradientBoostingRegressor(n_estimators=50),
-        'el': ElasticNet(),
+        'en': ElasticNet(),
         'hr': HuberRegressor(),
-        'br': BayesianRidge(n_iter=300),
+        'br': BayesianRidge(n_iter=100),
         'll': LassoLars(),
         'lasso': Lasso(),
         'ridge': Ridge(),
@@ -82,9 +82,9 @@ def define_model_params():
             "max_features": [0.3, 0.4, 0.8],
             "min_samples_split": [1, 3, 10, 20],
             "min_samples_leaf": [1, 10, 20, 30]},
-        'el' : {
+        'en' : {
             "l1_ratio": [0.5, 0.7, 0.9, 1.0],
-            "eps": [0.0005, 0.001, 0.005]},
+            "alpha": [0.2, 0.5, 0.8, 1.0, 2.0]},
         'hr' : {
             "epsilon": [1.35, 1.6, 2.0, 2.5],
             "alpha" : [0.0001, 0.001, 0.005]},
@@ -144,7 +144,7 @@ def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
             model_name = models_to_run[index]
             parameter_values = params[model_name]
             param_size = [len(a) for a in parameter_values.values()]
-            param_size = min(np.prod(param_size), 50) # change to 10 for debug
+            param_size = min(np.prod(param_size), 2) # change back to 50 for true run
             with Timer(model_name) as t:
                 estimators = RandomizedSearchCV(model, parameter_values,
                     scoring = criterion, n_jobs = -1, cv = cv_folds,
@@ -187,6 +187,9 @@ def main():
     parser.set_defaults(model_type = 'lr',
         data_path = "data/merged/individual/bronx_2010_2010.csv")
     args = parser.parse_args()
+    
+    # LR, ElasticNet, HuberRegressor, BayesianRidge, LassoLars
+    # taking a very long time
     model_type, data_path = args.model_type, args.data_path
     model_type = [m.lower() for m in model_type]
     output_dir = "data/results"
@@ -208,7 +211,9 @@ def main():
     print("Normalizing data")
     X_train, X_test = dc.normalize(X_train, X_test)
 
+    print("Fitting models")
     mods, params = define_model_params()
+    print(model_type)
     model_results, model = model_loop(model_type, mods, params,
         X_train, X_test, y_train, y_test)
     # write out predictions to file
