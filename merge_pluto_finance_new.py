@@ -350,7 +350,7 @@ def bbl_dist_to_subway(data,
         filepath = "data/open_nyc/subwaydist.csv"):
     subwaydist = pd.read_csv(filepath)
     subwaydist = subwaydist.drop(
-        ['latitude','longitude', 'zipcode'], axis = 1)
+        ['latitude','longitude'], axis = 1) #zipcode
     return data.merge(subwaydist, how = 'left', on = ['bbl'])
 
 
@@ -358,7 +358,7 @@ def bbl_dist_to_open_NYC_data(data,
         filepath = "data/open_nyc/some_dist_metrics.csv"):
     other_distances = pd.read_csv(filepath)
     other_distances = other_distances.drop(
-        ['latitude', 'longitude', 'zipcode'], axis = 1)
+        ['latitude', 'longitude'], axis = 1) #zipcode
     return data.merge(other_distances, how = 'left', on = ['bbl'])
 
 
