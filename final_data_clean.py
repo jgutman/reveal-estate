@@ -98,6 +98,6 @@ def extract_affected_properties(df, path_to_bbls):
     affected_properties = df.loc[df['bbl'].isin(bbls)]
     df_minus_properties = df[~df.index.isin(affected_properties.index)]
     df_minus_properties.reset_index(drop=True, inplace=True)
-    print(df.shape)
+    df_minus_properties = df_minus_properties.drop(['bbl','latitude', 'longitude'], axis = 1)
     print(df_minus_properties.shape)
     return affected_properties, df_minus_properties
