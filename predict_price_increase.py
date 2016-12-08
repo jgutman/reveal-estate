@@ -13,7 +13,6 @@ from final_modeling import *
 
 
 
-
 def prepare_data(df_orig, df_updated_subways):
     
     '''
@@ -29,18 +28,20 @@ def prepare_data(df_orig, df_updated_subways):
         
     '''
     print("Creating target variable")
-    X_orig, y_orig = create_target_var(df_orig, 'price_per_sqft')
-    X_updated, y_predicted = create_target_var(df_updated_subways, 'price_per_sqft')
     
-    X_orig, X_updated = fill_na(X_orig, X_updated)
+    df_updated_subways = drop_cols(df_updated_subways, ['sale_date', 'sale_price', 'latitude', 'longitude', 'public_recycling_bins_dist'])
+    
+    X_orig, y_orig = create_target_var(df_orig, 'price_per_sqft')
+    X_updated, _ = create_target_var(df_updated_subways, 'price_per_sqft')
+    
+    _, X_updated = fill_na(X_orig, X_updated)
     
     print("Normalizing data")
-    X_orig, X_updated = normalize(X_orig, X_updated)
+    _, X_updated = normalize(X_orig, X_updated)
 
     return X_orig, X_updated, y_orig
 
 
-def retain_bbl
 
 def make_prediction(X_orig, X_updated, y_orig, model):
     '''
@@ -49,6 +50,13 @@ def make_prediction(X_orig, X_updated, y_orig, model):
         
     '''
     predicted = model.predict(X_updated)
+    X_orig['y_pred'] = predicted
+    X_orig['y_original'] = y_orig
+    X_orig.to_csv('price_increase.csv')
+
+
+               
+    
 
 
 
