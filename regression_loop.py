@@ -9,7 +9,6 @@ from sklearn import preprocessing, model_selection, svm, metrics, tree
 from sklearn.metrics import *
 from sklearn.model_selection import KFold, GridSearchCV, RandomizedSearchCV
 
-
 from sklearn.ensemble import AdaBoostRegressor, BaggingRegressor, \
     ExtraTreesRegressor, RandomForestRegressor, GradientBoostingRegressor
 from sklearn.linear_model import ElasticNet, HuberRegressor, \
@@ -20,6 +19,7 @@ from argparse import ArgumentParser
 import warnings
 import final_modeling as fm
 import final_data_clean as dc
+import predict_price_increase as ppi
 
 class Timer(object):
     def __init__(self, name=None):
@@ -216,7 +216,22 @@ def main():
         X_train, X_test, y_train, y_test)
     # write out predictions to file
     # write out results
+    # pickle the model
     print(model_results)
+
+    # model_name = model.toString()
+
+    # Apply fitted model to affected properties near the Queens Light Rail
+    affected_properties, data = dc.extract_affected_properties(data,
+        "data/subway_bbls/Queens Light Rail BBL.csv")
+
+    X_updated, X_updated_for_modeling, y_orig = ppi.prepare_data(
+        affected_properties)
+
+    ppi.make_prediction(X_updated, X_updated_for_modeling, y_orig, model,
+        "output/price_increase_{}.csv".format(model_name))
+
+
 
 
 if __name__ == '__main__':
