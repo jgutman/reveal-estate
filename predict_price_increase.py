@@ -9,7 +9,7 @@ from sklearn.ensemble import RandomForestRegressor
 from argparse import ArgumentParser
 from final_data_clean import *
 from final_modeling import *
-
+from merge_pluto_finance_new import *
 
 
 
@@ -29,18 +29,20 @@ def prepare_data(df_orig, df_updated_subways):
         
     '''
     print("Creating target variable")
-    X_orig, y_orig = create_target_var(df_orig, 'price_per_sqft')
-    X_updated, y_predicted = create_target_var(df_updated_subways, 'price_per_sqft')
     
-    X_orig, X_updated = fill_na(X_orig, X_updated)
+    df_updated_subways = drop_cols(df_updated_subways, ['latitude', 'longitude'])
+    print(df_updated_subways.shape)
+    X_orig, y_orig = create_target_var(df_orig, 'price_per_sqft')
+    X_updated, _ = create_target_var(df_updated_subways, 'price_per_sqft')
+    
+    _, X_updated = fill_na(X_updated, X_updated)
     
     print("Normalizing data")
-    X_orig, X_updated = normalize(X_orig, X_updated)
+    _, X_updated = normalize(X_updated, X_updated)
 
     return X_orig, X_updated, y_orig
 
 
-def retain_bbl
 
 def make_prediction(X_orig, X_updated, y_orig, model):
     '''
@@ -48,7 +50,16 @@ def make_prediction(X_orig, X_updated, y_orig, model):
     Pandas dataframe with
         
     '''
-    predicted = model.predict(X_updated)
+    #bbls_to_identify = X_updated['bbl']
+    predicted = model.predict(X_updated.drop(['bbl'], axis=1))
+    X_orig['y_pred'] = predicted
+    X_orig['y_original'] = y_orig
+    X_orig.to_csv('price_increase.csv')
+
+
+
+
+
 
 
 
