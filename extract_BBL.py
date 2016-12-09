@@ -2,7 +2,7 @@ import pandas as pd
 
 def write_bbl_to_file(path, output_path):
     data_limited = pd.read_csv(path,
-        usecols = ['bbl', 'latitude', 'longitude'])
+        usecols = ['bbl', 'latitude', 'longitude', 'zipcode'])
     data_limited = data_limited.drop_duplicates()
     data_limited.to_csv(output_path,
         index = False, chunksize=1e4)

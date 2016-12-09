@@ -31,10 +31,10 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
     float_cols = ['BldgDepth', 'BldgFront', 'BsmtCode', 'ComArea',
         'Easements', 'LotDepth', 'LotFront', 'NumBldgs', 'NumFloors',
         'ResArea', 'UnitsRes', 'UnitsTotal', 'XCoord', 'YCoord',
-        'YearAlter1', 'YearAlter2', 'YearBuilt']
+        'YearAlter1', 'YearAlter2', 'YearBuilt', 'ZipCode']
     float_cols = {a: np.float64 for a in float_cols}
 
-    int_cols = ['Block', 'BoroCode',  'CondoNo']
+    int_cols = ['Block', 'BoroCode',  'CondoNo', 'CD']
     int_cols = {a: np.int64 for a in int_cols}
 
     cols_dtype = dict(string_cols, **float_cols)
@@ -54,10 +54,12 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
         data.columns = [col.strip().lower() for col in data.columns]
         # Append new rows to existing dataframe
         pluto = pluto.append(data)
-    return clean_pluto(pluto)
+
+    pluto = clean_pluto(pluto, initials)
+    return pluto
 
 
-def clean_pluto(pluto):
+def clean_pluto(pluto, initials):
     pluto = pluto.reset_index(drop=True)
     # Convert xcoord and ycoord columns to latitude and longitudes
     pluto = convert_df(pluto, 'xcoord', 'ycoord')
@@ -113,6 +115,26 @@ def clean_pluto(pluto):
     # Limit UnitRes and UnitsTotal
     pluto = censor(pluto, 'unitsres', 100)
     pluto = censor(pluto, 'unitstotal', 100)
+
+    pluto = merge_population_data(pluto, initials)
+    return pluto
+
+def merge_population_data(pluto, initials,
+        data_dir = "data/open_nyc",
+        filename = "l_population_by_community_district.csv"):
+    """
+    Merge pluto with community district level population info by decade.
+    """
+    population = pd.read_csv(os.path.join(data_dir, filename))
+    population.columns = [col.strip().lower() for col in population.columns]
+    population.columns = [col.replace(" ", "_") for col in population.columns]
+    pluto["cd_number"] = pd.Series([cd % 100 for cd in pluto.cd],
+        index = pluto.index)
+    inv_initials = {v: k for k, v in initials.items()}
+    pluto = pluto.replace({'borough': inv_initials})
+    population.borough = [boro.replace(" ", "").lower() for boro in
+        population.borough]
+    pluto = pluto.merge(population, how='left', on = ['borough', 'cd_number'])
     return pluto
 
 
