@@ -84,7 +84,6 @@ def extract_affected_properties(df, path_to_bbls):
         
     Args:
         df: Pandas dataframe
-        path_to_bbls: path to a csv file that contains the affected bbls.
     Returns:
         affected_properties: Pandas dataframe 
         df: Pandas dataframe without the affected properties

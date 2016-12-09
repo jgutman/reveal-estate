@@ -14,13 +14,13 @@ from merge_pluto_finance_new import *
 
 
 
-def prepare_data(df_orig, df_updated_subways):
+def prepare_data(df_updated_subways):
     
     '''
     Prepares the dataframe of affected properties to have the model applied.
     
     Args:
-        df: Pandas dataframe of affected properties
+        df_orig: Pandas dataframe of affected properties with updated subway features
         
     Returns:
         X_orig: Original features for the affected properties (without added subway information)
@@ -28,33 +28,33 @@ def prepare_data(df_orig, df_updated_subways):
         X_updated: Updated features for affected properties (with added subway information)
         
     '''
-    print("Creating target variable")
+    #print("Creating target variable")
     
     df_updated_subways = drop_cols(df_updated_subways, ['latitude', 'longitude'])
-    print(df_updated_subways.shape)
-    X_orig, y_orig = create_target_var(df_orig, 'price_per_sqft')
-    X_updated, _ = create_target_var(df_updated_subways, 'price_per_sqft')
+    #print(df_updated_subways.shape, df_orig.shape)
+    X_updated, y_orig = create_target_var(df_updated_subways, 'price_per_sqft')
     
-    _, X_updated = fill_na(X_updated, X_updated)
+    X_updated_for_modeling = X_updated.drop(['bbl'], axis = 1)
+    _, X_updated_for_modeling = fill_na(X_updated_for_modeling, X_updated_for_modeling)
     
-    print("Normalizing data")
-    _, X_updated = normalize(X_updated, X_updated)
+    #print("Normalizing data")
+    _, X_updated_for_modeling = normalize(X_updated_for_modeling, X_updated_for_modeling)
 
-    return X_orig, X_updated, y_orig
+    return X_updated, X_updated_for_modeling, y_orig
 
 
 
-def make_prediction(X_orig, X_updated, y_orig, model):
+def make_prediction(X_updated, X_updated_for_modeling, y_orig, model):
     '''
     Predicts price_per_sqft for the dataframe with updated subway information, and creates
     Pandas dataframe with
-        
+    
     '''
-    #bbls_to_identify = X_updated['bbl']
-    predicted = model.predict(X_updated.drop(['bbl'], axis=1))
-    X_orig['y_pred'] = predicted
-    X_orig['y_original'] = y_orig
-    X_orig.to_csv('price_increase.csv')
+    #print(X_updated_for_modeling.shape)
+    predicted = model.predict(X_updated_for_modeling)
+    X_updated['y_pred'] = predicted
+    X_updated['y_original'] = y_orig
+    X_updated[['bbl','y_original','y_pred']].to_csv('price_increase.csv')
 
 
 
