@@ -41,7 +41,7 @@ def get_data_for_model(data_path = \
         'bronx_brooklyn_manhattan_queens_statenisland_2003_2016.csv'):
     df = pd.read_csv(data_path, low_memory = True)
     # drop columns that are not needed or are redundant
-    df = drop_cols(df, ['sale_date', 'sale_price', 'public_recycling_bins_dist'])
+    df = drop_cols(df, ['sale_date', 'sale_price'])
     return df
 
 
@@ -100,9 +100,6 @@ def main():
     data = get_data_for_model(data_path)
     
     affected_properties, data = extract_affected_properties(data, "data/subway_bbls/Queens Light Rail BBL.csv")
-    updated_affected_properties = affected_properties.drop(['subwaydist'], axis =1)
-    updated_affected_properties = bbl_dist_to_subway(updated_affected_properties, filepath = "data/open_nyc/updatedsubwaydist.csv")
-    
     
     
     print("Creating target variable")
@@ -110,26 +107,25 @@ def main():
 
     print("Splitting data into training and test sets")
     X_train, X_test, y_train, y_test = split_data(X, y)
-    print("Train: %s, Test: %s" % (X_train.shape, X_test.shape))
-    print("Train y: %s, Test y: %s" % (y_train.shape, y_test.shape))
 
     print("Imputing missing values")
     X_train, X_test = fill_na(X_train, X_test)
 
-
+    print("Train: %s, Test: %s" % (X_train.shape, X_test.shape))
+    print("Train y: %s, Test y: %s" % (y_train.shape, y_test.shape))
     print("Normalizing data")
     X_train, X_test = normalize(X_train, X_test)
     
-    X_orig, X_updated, y_orig = prepare_data(affected_properties,updated_affected_properties)
+    X_updated, X_updated_for_modeling, y_orig = prepare_data(affected_properties)
 
     if model_type == 'lr':
         print("Fitting Linear Regression model")
         linear_reg = fit_LR(X_train, X_test, y_train, y_test)
-        make_prediction(X_orig, X_updated, y_orig, linear_reg)
+        make_prediction(X_updated, X_updated_for_modeling, y_orig, linear_reg)
     elif model_type == 'rf':
         print("Fitting Random Forest model")
         random_forest = fit_RF(X_train, X_test, y_train, y_test)
-        make_prediction(X_orig, X_updated, y_orig, random_forest)
+        make_prediction(X_updated, X_updated_for_modeling, y_orig, random_forest)
     else:
         print("Please enter a valid model name (LR for Linear Regression or RF for Random Forest.")
 
