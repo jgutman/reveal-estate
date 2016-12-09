@@ -95,16 +95,16 @@ def main():
     args = parser.parse_args()
     model_type, data_path = args.model_type, args.data_path
     model_type = model_type.lower()
-    
+
     print("Reading in data from %s" % data_path)
     data = get_data_for_model(data_path)
-    
+
     affected_properties, data = extract_affected_properties(data, "data/subway_bbls/Queens Light Rail BBL.csv")
     updated_affected_properties = affected_properties.drop(['subwaydist'], axis =1)
     updated_affected_properties = bbl_dist_to_subway(updated_affected_properties, filepath = "data/open_nyc/updatedsubwaydist.csv")
-    
-    
-    
+
+
+
     print("Creating target variable")
     X, y = create_target_var(data, 'price_per_sqft')
 
@@ -116,10 +116,9 @@ def main():
     print("Imputing missing values")
     X_train, X_test = fill_na(X_train, X_test)
 
-
     print("Normalizing data")
     X_train, X_test = normalize(X_train, X_test)
-    
+
     X_orig, X_updated, y_orig = prepare_data(affected_properties,updated_affected_properties)
 
     if model_type == 'lr':

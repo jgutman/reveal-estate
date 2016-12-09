@@ -186,9 +186,9 @@ def main():
     parser.set_defaults(model_type = 'lr',
         data_path = "data/merged/individual/bronx_2010_2010.csv")
     args = parser.parse_args()
-    
-    # LR, ElasticNet, HuberRegressor, BayesianRidge, LassoLars, Lasso, Ridge, SGD, LinearSVR
-    # taking a very long time
+
+    # LR, ElasticNet, HuberRegressor, BayesianRidge, LassoLars, Lasso, Ridge,
+    # SGD, LinearSVR taking a very long time
     model_type, data_path = args.model_type, args.data_path
     model_type = [m.lower() for m in model_type]
     output_dir = "data/results"
