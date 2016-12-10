@@ -210,8 +210,8 @@ def output_results(model_grid_results, output_dir, y_test):
     model_results_df.to_csv(os.path.join(output_dir, 'results_dict.csv'),
         columns = ['cv_score', 'test_score', 'hyperparams'])
 
-    model_name, best_model = get_best_model(model_results)
-    best_y_pred = model_results[model_name]['predictions']
+    model_name, best_model = get_best_model(model_grid_results)
+    best_y_pred = model_grid_results[model_name]['predictions']
     pd.DataFrame({'y_true': y_test, 'y_pred': best_y_pred}).to_csv(
         os.path.join(output_dir, 'results_predictions.csv'))
 
@@ -231,7 +231,7 @@ def main():
         help = "Max number of grid search iterations per model type")
     parser.add_argument("--output", dest = "output_dir",
         help = "Path to directory for writing output files to")
-    parser.set_defaults(model_type = 'rf', max_per_grid = 2,
+    parser.set_defaults(model_type = ['rf'], max_per_grid = 2,
         data_path = "data/merged/queens_2003_2016.csv",
         output_dir = "data/results")
     args = parser.parse_args()
@@ -240,6 +240,8 @@ def main():
     # SGD, LinearSVR taking a very long time
     model_type, data_path, max_per_grid, output_dir = args.model_type, \
         args.data_path, args.max_per_grid, args.output_dir
+    if type(model_type) == str:
+        model_type = [model_type]
     model_type = [m.lower() for m in model_type]
 
     print("Reading in data from %s" % data_path)
