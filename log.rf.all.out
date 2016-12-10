@@ -1,0 +1,10 @@
+Reading in data from data/merged/bronx_brooklyn_manhattan_queens_statenisland_2003_2016.csv
+Creating target variable
+Splitting data into training and test sets
+Train: (357460, 223), Test: (89365, 223)
+Train y: (357460,), Test y: (89365,)
+Imputing missing values
+Normalizing data
+Fitting models
+rf: 4.8e+03 seconds elapsed
+model comparison loop: 4.8e+03 seconds elapsed

@@ -28,13 +28,9 @@ def prepare_data(df_updated_subways):
         X_updated: Updated features for affected properties (with added subway information)
 
     '''
-    #print("Creating target variable")
-
-    df_updated_subways = drop_cols(df_updated_subways, ['latitude', 'longitude'])
-    #print(df_updated_subways.shape, df_orig.shape)
     X_updated, y_orig = create_target_var(df_updated_subways, 'price_per_sqft')
 
-    X_updated_for_modeling = X_updated.drop(['bbl'], axis = 1)
+    X_updated_for_modeling = X_updated.drop('bbl', axis = 1)
     _, X_updated_for_modeling = fill_na(X_updated_for_modeling, X_updated_for_modeling)
 
     #print("Normalizing data")

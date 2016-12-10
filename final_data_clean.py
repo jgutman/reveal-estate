@@ -81,13 +81,13 @@ def normalize(X_train, X_test):
 def extract_affected_properties(df, path_to_bbls):
     '''
     Extracts the properties affected by a subway line, based on bbl.
-        
+
     Args:
         df: Pandas dataframe
     Returns:
-        affected_properties: Pandas dataframe 
+        affected_properties: Pandas dataframe
         df: Pandas dataframe without the affected properties
-    
+
     '''
     bbls = []
     file = open(path_to_bbls, 'rb')
@@ -97,6 +97,6 @@ def extract_affected_properties(df, path_to_bbls):
     affected_properties = df.loc[df['bbl'].isin(bbls)]
     df_minus_properties = df[~df.index.isin(affected_properties.index)]
     df_minus_properties.reset_index(drop=True, inplace=True)
-    df_minus_properties = df_minus_properties.drop(['bbl','latitude', 'longitude'], axis = 1)
+    df_minus_properties = df_minus_properties.drop('bbl', axis = 1)
     print(df_minus_properties.shape)
     return affected_properties, df_minus_properties

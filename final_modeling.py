@@ -41,8 +41,8 @@ def get_data_for_model(data_path = \
         'bronx_brooklyn_manhattan_queens_statenisland_2003_2016.csv'):
     df = pd.read_csv(data_path, low_memory = True)
     # drop columns that are not needed or are redundant
-    df = drop_cols(df, ['sale_date', 'sale_price', 'bbl', 'latitude',
-        'longitude', 'zipcode'])
+    df = drop_cols(df, ['sale_date', 'sale_price', 'zipcode',
+        'latitude', 'longitude'])
     return df
 
 

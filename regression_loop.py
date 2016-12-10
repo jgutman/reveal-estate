@@ -61,7 +61,7 @@ def define_model_params():
         'rf' : {
             "max_depth": [1, 3, 5, 10, 20, 50, 100],
             "max_features": [0.3, 0.4, 0.6, 0.8],
-            "min_samples_split": [1, 3, 10, 20],
+            "min_samples_split": [2, 4, 8, 10, 20],
             "min_samples_leaf": [1, 10, 20, 30],
             "bootstrap": ["True", "False"]},
         'ada' : {
@@ -153,7 +153,7 @@ def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
             with Timer(model_name) as t:
                 estimators = RandomizedSearchCV(model, parameter_values,
                     scoring = cv_scorer, n_jobs = -1, cv = cv_folds,
-                    random_state = 300, n_iter = param_size)
+                    random_state = 300, n_iter = param_size, verbose = 2)
                 estimators.fit(X_train, y_train)
                 print("Best estimator found by grid search:")
                 print(estimators.best_estimator_)
@@ -182,12 +182,21 @@ def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
 
 
 def get_best_model(model_grid_results):
-    zipped_results = [(model_name, m[cv_score]) for model_name, m in
+    zipped_results = [(model_name, m['cv_score']) for model_name, m in
         model_grid_results.items()]
     zipped_results.sort(key = lambda x: x[1])
     best_model_name = zipped_results[0][0]
     best_model = model_grid_results[best_model_name]['model']
     return best_model_name, best_model
+
+
+def write_dict_to_df(model_grid_results):
+    model_results_string = {k: {sub_k: str(sub_v)
+            for sub_k, sub_v in v.items()}
+        for k, v in model_grid_results.items()}
+
+    output = pd.DataFrame.from_dict(model_results_string).transpose()
+    return output
 
 
 def apply_model_to_lightrail(data, model, model_name,
@@ -213,7 +222,7 @@ def main():
         help = "Defines the type of model to be built. Not case sensitive")
     parser.add_argument("--data", dest = "data_path",
         help = "Path to csv file on which you want to fit a model.")
-    parser.set_defaults(model_type = 'lr',
+    parser.set_defaults(model_type = 'rf',
         data_path = "data/merged/queens_2003_2016.csv")
     args = parser.parse_args()
 
@@ -223,7 +232,8 @@ def main():
     model_type = [m.lower() for m in model_type]
 
     print("Reading in data from %s" % data_path)
-    data = fm.get_data_for_model(data_path)
+    data_with_bbl = fm.get_data_for_model(data_path)
+    data = data_with_bbl.drop('bbl', axis=1)
 
     print("Creating target variable")
     X, y = fm.create_target_var(data, 'price_per_sqft')
@@ -244,9 +254,15 @@ def main():
     model_results = model_loop(model_type, mods, params,
         X_train, X_test, y_train, y_test, max_per_grid = 50)
     print(model_results)
-    model_name, best_model = get_best_model(model_results)
 
-    apply_model_to_lightrail(data, best_model, model_name)
+    model_results_df = write_dict_to_df(model_results)
+    model_results_df.to_csv(columns = ['cv_score', 'test_score',
+        'hyperparams'])
+
+    model_name, best_model = get_best_model(model_results)
+    best_y_pred = model_results[model_name]['predictions']
+
+    apply_model_to_lightrail(data_with_bbl, best_model, model_name)
 
 if __name__ == '__main__':
     main()
