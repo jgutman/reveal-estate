@@ -153,7 +153,8 @@ def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
             with Timer(model_name) as t:
                 estimators = RandomizedSearchCV(model, parameter_values,
                     scoring = cv_scorer, n_jobs = -1, cv = cv_folds,
-                    random_state = 300, n_iter = param_size, verbose = 2)
+                    # for more verbosity, set n_jobs = 1, verbose = 3? 10?
+                    random_state = 300, n_iter = param_size, verbose = 1)
                 estimators.fit(X_train, y_train)
                 print("Best estimator found by grid search:")
                 print(estimators.best_estimator_)
