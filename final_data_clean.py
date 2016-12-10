@@ -4,7 +4,7 @@ import math
 from sklearn import model_selection
 from argparse import ArgumentParser
 from sklearn.preprocessing import Imputer, MinMaxScaler
-import merge_pluto_finance_new as mpf
+from merge_pluto_finance_new import bbl_dist_to_subway
 
 '''
 Module to do final cleaning and train/test split of the data before modeling.
@@ -104,7 +104,7 @@ def extract_affected_properties(df, path_to_bbls,
 
     updated_affected_properties = affected_properties.drop(
         'subwaydist', axis = 1)
-    updated_affected_properties = mpf.bbl_dist_to_subway(
+    updated_affected_properties = bbl_dist_to_subway(
         updated_affected_properties, filepath = path_to_subway_dist)
 
     affected_properties.drop('bbl', axis = 1, inplace = True)
