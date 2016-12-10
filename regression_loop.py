@@ -231,8 +231,5 @@ def main():
     ppi.make_prediction(X_updated, X_updated_for_modeling, y_orig, model,
         "output/price_increase_{}.csv".format(model_name))
 
-
-
-
 if __name__ == '__main__':
     main()

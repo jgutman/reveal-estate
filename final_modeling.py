@@ -41,7 +41,8 @@ def get_data_for_model(data_path = \
         'bronx_brooklyn_manhattan_queens_statenisland_2003_2016.csv'):
     df = pd.read_csv(data_path, low_memory = True)
     # drop columns that are not needed or are redundant
-    df = drop_cols(df, ['sale_date', 'sale_price'])
+    df = drop_cols(df, ['sale_date', 'sale_price', 'bbl', 'latitude',
+        'longitude', 'zipcode'])
     return df
 
 
@@ -52,7 +53,7 @@ def fit_LR(X_train, X_test, y_train, y_test):
         X_train: Pandas dataframe with training features.
         X_test: Pandas dataframe with same features as X_train.
         y_train: Target variable for X_train.
-        y_test: Target varibale for X_test.
+        y_test: Target variable for X_test.
 
     Returns:
         lin_reg: Linear Regression model

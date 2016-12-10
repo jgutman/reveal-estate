@@ -475,7 +475,7 @@ def main():
     buildings = bbl_dist_to_open_NYC_data(buildings)
 
     final_cols_to_remove = ['bbl_pluto', 'borocode', 'block', 'condono',
-        'sale_year', 'xcoord', 'ycoord']
+        'sale_year', 'xcoord', 'ycoord', 'cd', 'cd_number']
     buildings = buildings.drop(final_cols_to_remove, axis=1)
     cat_vars = ['borough', 'schooldist', 'council', 'bldgclass', 'landuse',
         'ownertype', 'proxcode', 'lottype', 'tax_class_at_time_of_sale']

@@ -20,7 +20,7 @@ def main():
     boros = 'bronx_brooklyn_manhattan_queens_statenisland'
     years = '2003_2016'
     path = 'data/merged/{}_{}.csv'.format(boros, years)
-    output_path = 'data/{}_{}_bbls.csv'.format(boros, years)
+    output_path = 'data/bbls/{}_{}_bbls.csv'.format(boros, years)
     write_bbl_to_file(path, output_path)
     check_nrows(path)
 
