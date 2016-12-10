@@ -4,3 +4,4 @@ pyproj/*
 .ipynb_checkpoints/*
 dbfpy*
 __pycache__/*
+data_size*.txt
