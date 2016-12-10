@@ -20,6 +20,7 @@ import warnings
 import final_modeling as fm
 import final_data_clean as dc
 import predict_price_increase as ppi
+from custom_scorers import build_tuple_scorer, parse_criterion_string
 
 class Timer(object):
     def __init__(self, name=None):
@@ -116,7 +117,8 @@ def define_model_params():
     return mods, params
 
 def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
-        criterion = 'median_absolute_error', cv_folds = 5,
+        criterion_list = ['median_absolute_err', 'mean_absolute_err',
+            'accuracy_5', 'accuracy_10'], cv_folds = 5, max_per_grid = 50,
         output_dir = 'data/results'):
     """
     Returns a dictionary where the keys are model nicknames (strings)
@@ -139,51 +141,59 @@ def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
         dictionary + model
     """
     model_grid_results = {}
+    tuple_score = build_tuple_scorer(criterion_list)
+    cv_scorer = parse_criterion_string(criterion_list[0])
+
     with Timer('model comparison loop') as qq:
         for index, model in enumerate([mods[x] for x in models_to_run]):
             model_name = models_to_run[index]
             parameter_values = params[model_name]
             param_size = [len(a) for a in parameter_values.values()]
-            param_size = min(np.prod(param_size), 1) # change back to 50 for true run
+            param_size = min(np.prod(param_size), max_per_grid)
             with Timer(model_name) as t:
                 estimators = RandomizedSearchCV(model, parameter_values,
-                    scoring = criterion, n_jobs = -1, cv = cv_folds,
+                    scoring = cv_scorer, n_jobs = -1, cv = cv_folds,
                     random_state = 300, n_iter = param_size)
                 estimators.fit(X_train, y_train)
                 print("Best estimator found by grid search:")
                 print(estimators.best_estimator_)
                 print("Best parameters set found on development set:")
-                hyperparams = estimators.best_params_
-                print(hyperparams)
+                print(estimators.best_params_)
 
                 print("Cross validation score on development set:")
-                cv_score = estimators.cv_results_['mean_test_score']
+                cv_score = np.abs(estimators.best_score_)
                 print(cv_score)
 
                 print("Test set score using best hyperparameters:")
-                test_score = estimators.score(X_test, y_test)
+                test_score = np.abs(list(tuple_score(
+                    estimators.best_estimator_, X_test, y_test)))
                 print(test_score)
 
                 y_pred = estimators.predict(X_test)
                 model_grid_results[model_name] = {
                     'cv_score': cv_score,
                     'test_score': test_score,
-                    'hyperparams': hyperparams,
+                    'hyperparams': estimators.best_params_,
                     'predictions': y_pred,
-                    'model': estimator.best_estimator_
+                    'model': estimators.best_estimator_
                 }
-
-                apply_model_to_lightrail(estimator.best_estimator_,
-                    model_name, output_dir)
     print("Models fitted: {}".format(model_grid_results.keys()))
     return model_grid_results
 
 
-def apply_model_to_lightrail(model, model_name, output_dir,
+def get_best_model(model_grid_results):
+    best_model_name, best_cv_score = "", np.Inf
+    for model_name, model in model_grid_results.items():
+        pass
+    return None
+
+
+
+def apply_model_to_lightrail(data, model, model_name, output_dir,
         bbl_path = "data/subway_bbls/Queens Light Rail BBL.csv"):
     # Apply fitted model to affected properties near the Queens Light Rail
-    affected_properties, data = dc.extract_affected_properties(data,
-        bbl_path)
+    affected_properties, data = dc.extract_affected_properties(
+        data, bbl_path)
 
     X_updated, X_updated_for_modeling, y_orig = ppi.prepare_data(
         affected_properties)
@@ -198,11 +208,11 @@ def main():
     parser = ArgumentParser(description =
         "Run a cross-validated grid search over a model or list of models")
     parser.add_argument("--model", dest = "model_type", nargs="*",
-        help = "Defines the type of model to be built. Acceptable options include LR (linear regression), RF (random forest), and several others. Not case sensitive")
+        help = "Defines the type of model to be built. Not case sensitive")
     parser.add_argument("--data", dest = "data_path",
         help = "Path to csv file on which you want to fit a model.")
     parser.set_defaults(model_type = 'lr',
-        data_path = "data/merged/individual/bronx_2010_2010.csv")
+        data_path = "data/merged/queens_2003_2016.csv")
     args = parser.parse_args()
 
     # LR, ElasticNet, HuberRegressor, BayesianRidge, LassoLars, Lasso, Ridge,
@@ -229,11 +239,12 @@ def main():
 
     print("Fitting models")
     mods, params = define_model_params()
-    model_results, model = model_loop(model_type, mods, params,
+    model_results = model_loop(model_type, mods, params,
         X_train, X_test, y_train, y_test)
     print(model_results)
 
-
+    # apply_model_to_lightrail(estimators.best_estimator_,
+    #    model_name, output_dir)
 
 if __name__ == '__main__':
     main()
