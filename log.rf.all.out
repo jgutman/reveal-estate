@@ -7,3 +7,5 @@ Imputing missing values
 Normalizing data
 Fitting models
 Fitting 5 folds for each of 50 candidates, totalling 250 fits
+rf: 1.1e+04 seconds elapsed
+model comparison loop: 1.1e+04 seconds elapsed

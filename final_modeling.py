@@ -1,15 +1,12 @@
 import pandas as pd
-from pyproj import Proj
 import numpy as np
-import math
-import matplotlib.pyplot as plt
-from sklearn import datasets, linear_model
+from sklearn import linear_model
 from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
 from argparse import ArgumentParser
-from final_data_clean import *
-from merge_pluto_finance_new import *
-from predict_price_increase import *
+import final_data_clean as dc
+import merge_pluto_finance_new as mpf
+import predict_price_increase as ppi
 
 import seaborn as sns
 sns.set(color_codes=True)
@@ -41,7 +38,7 @@ def get_data_for_model(data_path = \
         'bronx_brooklyn_manhattan_queens_statenisland_2003_2016.csv'):
     df = pd.read_csv(data_path, low_memory = True)
     # drop columns that are not needed or are redundant
-    df = drop_cols(df, ['sale_date', 'sale_price', 'zipcode',
+    df = dc.drop_cols(df, ['sale_date', 'sale_price', 'zipcode',
         'latitude', 'longitude'])
     return df
 
@@ -75,7 +72,8 @@ def fit_RF(X_train, X_test, y_train, y_test):
     predicted = RF_reg_final.predict(X_test)
     percent_diff = 100*(np.abs(predicted - y_test).astype(float) / y_test)
     acc = 100 * (sum(i < 10. for i in percent_diff)/ len(percent_diff))
-    print('Mean squared error for Random Forest model: ', mean_squared_error(y_test, RF_reg_final.predict(X_test)))
+    print('Mean squared error for Random Forest model: ', mean_squared_error(
+        y_test, RF_reg_final.predict(X_test)))
     print('\nAccuracy (within 10% of true value): ', acc)
     return RF_reg_final
 
@@ -98,35 +96,39 @@ def main():
     model_type = model_type.lower()
 
     print("Reading in data from %s" % data_path)
-    data = get_data_for_model(data_path)
+    data_with_bbl = get_data_for_model(data_path)
 
-    affected_properties, data = extract_affected_properties(data, "data/subway_bbls/Queens Light Rail BBL.csv")
+    affected_bbl_path = "data/subway_bbls/Queens Light Rail BBL.csv"
+    print("Extracting affected BBLs from %s" % affected_bbl_path)
+    affected_properties, data_subset = dc.extract_affected_properties(
+        data_with_bbl, affected_bbl_path)
 
     print("Creating target variable")
     X, y = create_target_var(data, 'price_per_sqft')
 
     print("Splitting data into training and test sets")
-    X_train, X_test, y_train, y_test = split_data(X, y)
+    X_train, X_test, y_train, y_test = dc.split_data(X, y)
 
     print("Imputing missing values")
-    X_train, X_test = fill_na(X_train, X_test)
+    X_train, X_test = dc.fill_na(X_train, X_test)
 
     print("Train: %s, Test: %s" % (X_train.shape, X_test.shape))
     print("Train y: %s, Test y: %s" % (y_train.shape, y_test.shape))
 
     print("Normalizing data")
-    X_train, X_test = normalize(X_train, X_test)
+    X_train, X_test = dc.normalize(X_train, X_test)
 
-    X_updated, X_updated_for_modeling, y_orig = prepare_data(affected_properties)
+    X_updated, X_updated_for_modeling, y_orig = ppi.prepare_data(
+        affected_properties)
 
     if model_type == 'lr':
         print("Fitting Linear Regression model")
         linear_reg = fit_LR(X_train, X_test, y_train, y_test)
-        make_prediction(X_updated, X_updated_for_modeling, y_orig, linear_reg)
+        ppi.make_prediction(X_updated, X_updated_for_modeling, y_orig, linear_reg)
     elif model_type == 'rf':
         print("Fitting Random Forest model")
         random_forest = fit_RF(X_train, X_test, y_train, y_test)
-        make_prediction(X_updated, X_updated_for_modeling, y_orig, random_forest)
+        ppi.make_prediction(X_updated, X_updated_for_modeling, y_orig, random_forest)
     else:
         print("Please enter a valid model name (LR for Linear Regression or RF for Random Forest.")
 

@@ -1,10 +1,9 @@
 import pandas as pd
 import numpy as np
 import random
-import pylab as pl
-import matplotlib.pyplot as plt
 from scipy import optimize
 import time
+import pickle
 from sklearn import preprocessing, model_selection, svm, metrics, tree
 from sklearn.metrics import *
 from sklearn.model_selection import KFold, GridSearchCV, RandomizedSearchCV
@@ -36,7 +35,15 @@ class Timer(object):
     def __exit__(self, type, value, traceback):
         if self.name:
             print("{}:".format(self.name), end = ' ')
-            print('{:.2} seconds elapsed'.format(time.time() - self.tstart))
+            print(self.time_convert())
+
+    def time_convert(self):
+        total_sec = self.time_check()
+        hours = '{:0.0f}'.format(np.floor(total_sec / 3600.))
+        minutes = '{:0.0f}'.format(np.floor((total_sec % 3600.) / 60.))
+        seconds = '{:0.2f}'.format(total_sec % 60.)
+        str_time = '{} h, {} min, {} sec'.format(hours, minutes, seconds)
+        return(str_time)
 
 def define_model_params():
     mods = {
@@ -200,18 +207,21 @@ def write_dict_to_df(model_grid_results):
     return output
 
 
-def apply_model_to_lightrail(data, model, model_name,
-        output_dir = "data/results",
+def apply_model_to_lightrail(data_with_bbl, model, model_name,
+        y_pred_original, output_dir = "data/results",
         bbl_path = "data/subway_bbls/Queens Light Rail BBL.csv"):
     # Apply fitted model to affected properties near the Queens Light Rail
-    affected_properties, data = dc.extract_affected_properties(
-        data, bbl_path)
+    affected_properties, data_subset = dc.extract_affected_properties(
+        data_with_bbl, bbl_path)
 
     X_updated, X_updated_for_modeling, y_orig = ppi.prepare_data(
         affected_properties)
 
-    ppi.make_prediction(X_updated, X_updated_for_modeling, y_orig, model,
-        "{}/price_increase_{}.csv".format(output_dir, model_name))
+    output_price_increase = "{}/price_increase_{}.csv".format(
+        output_dir, model_name)
+
+    ppi.make_prediction(X_updated, X_updated_for_modeling,
+        y_pred_original, model, output = output_price_increase)
 
 def main():
     warnings.filterwarnings("ignore")
@@ -223,13 +233,19 @@ def main():
         help = "Defines the type of model to be built. Not case sensitive")
     parser.add_argument("--data", dest = "data_path",
         help = "Path to csv file on which you want to fit a model.")
-    parser.set_defaults(model_type = 'rf',
-        data_path = "data/merged/queens_2003_2016.csv")
+    parser.add_argument("--iters", dest = "max_per_grid", type = int,
+        help = "Max number of grid search iterations per model type")
+    parser.add_argument("--output", dest = "output_dir",
+        help = "Path to directory for writing output files to")
+    parser.set_defaults(model_type = 'rf', max_per_grid = 2,
+        data_path = "data/merged/queens_2003_2016.csv",
+        output_dir = "data/results")
     args = parser.parse_args()
 
     # LR, ElasticNet, HuberRegressor, BayesianRidge, LassoLars, Lasso, Ridge,
     # SGD, LinearSVR taking a very long time
-    model_type, data_path = args.model_type, args.data_path
+    model_type, data_path, max_per_grid, output_dir = args.model_type, \
+        args.data_path, args.max_per_grid, args.output_dir
     model_type = [m.lower() for m in model_type]
 
     print("Reading in data from %s" % data_path)
@@ -253,15 +269,17 @@ def main():
     print("Fitting models")
     mods, params = define_model_params()
     model_results = model_loop(model_type, mods, params,
-        X_train, X_test, y_train, y_test, max_per_grid = 50)
+        X_train, X_test, y_train, y_test,
+        max_per_grid = max_per_grid, output_dir = output_dir)
     print(model_results)
 
     model_results_df = write_dict_to_df(model_results)
-    model_results_df.to_csv(columns = ['cv_score', 'test_score',
-        'hyperparams'])
+    model_results_df.to_csv(''
+        columns = ['cv_score', 'test_score', 'hyperparams'])
 
     model_name, best_model = get_best_model(model_results)
     best_y_pred = model_results[model_name]['predictions']
+    pd.DataFrame({'y_true': y_test, 'y_pred': best_y_pred}).to_csv
 
     apply_model_to_lightrail(data_with_bbl, best_model, model_name)
 
