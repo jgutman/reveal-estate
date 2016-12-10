@@ -134,6 +134,7 @@ def merge_population_data(pluto, initials,
     pluto = pluto.replace({'borough': inv_initials})
     population.borough = [boro.replace(" ", "").lower() for boro in
         population.borough]
+    population = population.drop(['cd_name'], axis = 1)
     pluto = pluto.merge(population, how='left', on = ['borough', 'cd_number'])
     return pluto
 

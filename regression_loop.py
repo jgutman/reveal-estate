@@ -116,7 +116,8 @@ def define_model_params():
     return mods, params
 
 def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
-    criterion = 'mean_squared_error', cv_folds = 5):
+        criterion = 'median_absolute_error', cv_folds = 5,
+        output_dir = 'data/results'):
     """
     Returns a dictionary where the keys are model nicknames (strings)
     and the values are regressors with methods predict and fit
@@ -168,17 +169,34 @@ def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
                     'cv_score': cv_score,
                     'test_score': test_score,
                     'hyperparams': hyperparams,
-                    'predictions': y_pred
+                    'predictions': y_pred,
+                    'model': estimator.best_estimator_
                 }
-    return model_grid_results, estimators.best_estimator_
 
+                apply_model_to_lightrail(estimator.best_estimator_,
+                    model_name, output_dir)
+    print("Models fitted: {}".format(model_grid_results.keys()))
+    return model_grid_results
+
+
+def apply_model_to_lightrail(model, model_name, output_dir,
+        bbl_path = "data/subway_bbls/Queens Light Rail BBL.csv"):
+    # Apply fitted model to affected properties near the Queens Light Rail
+    affected_properties, data = dc.extract_affected_properties(data,
+        bbl_path)
+
+    X_updated, X_updated_for_modeling, y_orig = ppi.prepare_data(
+        affected_properties)
+
+    ppi.make_prediction(X_updated, X_updated_for_modeling, y_orig, model,
+        "{}/price_increase_{}.csv".format(output_dir, model_name))
 
 def main():
     warnings.filterwarnings("ignore")
 
     # Set up input option parsing for model type and data path
     parser = ArgumentParser(description =
-        "Model type (Linear Regression LR or Random Forest RF)")
+        "Run a cross-validated grid search over a model or list of models")
     parser.add_argument("--model", dest = "model_type", nargs="*",
         help = "Defines the type of model to be built. Acceptable options include LR (linear regression), RF (random forest), and several others. Not case sensitive")
     parser.add_argument("--data", dest = "data_path",
@@ -191,7 +209,6 @@ def main():
     # SGD, LinearSVR taking a very long time
     model_type, data_path = args.model_type, args.data_path
     model_type = [m.lower() for m in model_type]
-    output_dir = "data/results"
 
     print("Reading in data from %s" % data_path)
     data = fm.get_data_for_model(data_path)
@@ -214,22 +231,9 @@ def main():
     mods, params = define_model_params()
     model_results, model = model_loop(model_type, mods, params,
         X_train, X_test, y_train, y_test)
-    # write out predictions to file
-    # write out results
-    # pickle the model
     print(model_results)
 
-    # model_name = model.toString()
 
-    # Apply fitted model to affected properties near the Queens Light Rail
-    affected_properties, data = dc.extract_affected_properties(data,
-        "data/subway_bbls/Queens Light Rail BBL.csv")
-
-    X_updated, X_updated_for_modeling, y_orig = ppi.prepare_data(
-        affected_properties)
-
-    ppi.make_prediction(X_updated, X_updated_for_modeling, y_orig, model,
-        "output/price_increase_{}.csv".format(model_name))
 
 if __name__ == '__main__':
     main()
