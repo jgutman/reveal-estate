@@ -43,6 +43,24 @@ def get_data_for_model(data_path = \
     return df
 
 
+def preprocess_data(data):
+    print("Creating target variable")
+    X, y = create_target_var(data, 'price_per_sqft')
+
+    print("Splitting data into training and test sets")
+    X_train_raw, X_test, y_train, y_test = dc.split_data(X, y)
+    print("Train: %s, Test: %s" % (X_train_raw.shape, X_test.shape))
+    print("Train y: %s, Test y: %s" % (y_train.shape, y_test.shape))
+
+    print("Imputing missing values")
+    X_train, X_test = dc.fill_na(X_train_raw, X_test)
+
+    print("Normalizing data")
+    X_train, X_test = dc.normalize(X_train, X_test)
+
+    return X_train_raw, X_train, X_test, y_train, y_test
+
+
 def fit_LR(X_train, X_test, y_train, y_test):
     '''
     Fits Linear Regression model to Pandas dataframes (X_train, X_test, y_train, y_test).
@@ -78,7 +96,6 @@ def fit_RF(X_train, X_test, y_train, y_test):
     return RF_reg_final
 
 
-
 def main():
     warnings.filterwarnings("ignore")
 
@@ -87,7 +104,7 @@ def main():
         "Model type (Linear Regression LR or Random Forest RF)")
     parser.add_argument("--model", dest="model_type", type = str,
         help="Defines the type of model to be built. Acceptable options include LR (linear regression) or RF (random forest). Not case sensitive")
-    parser.add_argument("--data", dest="data_path",type = str,
+    parser.add_argument("--data", dest="data_path", type = str,
         help="Path to csv file on which you want to fit a model.")
     parser.set_defaults(model_type = 'lr',
         data_path = "data/merged/individual/bronx_2010_2010.csv")
@@ -97,38 +114,25 @@ def main():
 
     print("Reading in data from %s" % data_path)
     data_with_bbl = get_data_for_model(data_path)
+    data = data_with_bbl.drop('bbl', axis=1)
 
     affected_bbl_path = "data/subway_bbls/Queens Light Rail BBL.csv"
     print("Extracting affected BBLs from %s" % affected_bbl_path)
-    affected_properties, data_subset = dc.extract_affected_properties(
+    affected_properties, updated_properties = dc.extract_affected_properties(
         data_with_bbl, affected_bbl_path)
 
-    print("Creating target variable")
-    X, y = create_target_var(data, 'price_per_sqft')
-
-    print("Splitting data into training and test sets")
-    X_train, X_test, y_train, y_test = dc.split_data(X, y)
-
-    print("Imputing missing values")
-    X_train, X_test = dc.fill_na(X_train, X_test)
-
-    print("Train: %s, Test: %s" % (X_train.shape, X_test.shape))
-    print("Train y: %s, Test y: %s" % (y_train.shape, y_test.shape))
-
-    print("Normalizing data")
-    X_train, X_test = dc.normalize(X_train, X_test)
-
-    X_updated, X_updated_for_modeling, y_orig = ppi.prepare_data(
-        affected_properties)
+    X_train_raw, X_train, X_test, y_train, y_test = preprocess_data(data)
 
     if model_type == 'lr':
         print("Fitting Linear Regression model")
         linear_reg = fit_LR(X_train, X_test, y_train, y_test)
-        ppi.make_prediction(X_updated, X_updated_for_modeling, y_orig, linear_reg)
+        ppi.apply_model_to_lightrail(data_with_bbl, X_train_raw, linear_reg,
+            'lr_demo', output_dir = 'data/results')
     elif model_type == 'rf':
         print("Fitting Random Forest model")
         random_forest = fit_RF(X_train, X_test, y_train, y_test)
-        ppi.make_prediction(X_updated, X_updated_for_modeling, y_orig, random_forest)
+        ppi.apply_model_to_lightrail(data_with_bbl, X_train_raw, random_forest,
+            'rf_demo', output_dir = 'data/results')
     else:
         print("Please enter a valid model name (LR for Linear Regression or RF for Random Forest.")
 

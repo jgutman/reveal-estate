@@ -4,10 +4,10 @@ import math
 from sklearn import model_selection
 from argparse import ArgumentParser
 from sklearn.preprocessing import Imputer, MinMaxScaler
+import merge_pluto_finance_new as mpf
 
 '''
 Module to do final cleaning and train/test split of the data before modeling.
-
 '''
 
 def drop_cols(data, cols, target_var = "price_per_sqft",
@@ -78,25 +78,36 @@ def normalize(X_train, X_test):
     return X_train, X_test
 
 
-def extract_affected_properties(df, path_to_bbls):
+def extract_affected_properties(df, path_to_bbls,
+        path_to_subway_dist = "data/open_nyc/updatedsubwaydist.csv"):
     '''
     Extracts the properties affected by a subway line, based on bbl.
+    Then alters their distance to subway according to the updated subway
+    distances in path_to_subway_dist file.
 
     Args:
-        df: Pandas dataframe
+        df: Pandas dataframe with bbl column and all properties
+        path_to_bbls: filepath to csv containing a list of BBLs within a 0.5 mi
+            radius of proposed Queens lightrail
+        path_to_subway_dist: filepath to csv containing altered distance to
+            subway for affected properties (and original distance for all
+            unaffected properties)
     Returns:
-        affected_properties: Pandas dataframe
-        df: Pandas dataframe without the affected properties
-
+        affected_properties: Pandas dataframe with original dist to subway
+        updated_affected_properties: Pandas dataframe with altered distance
+            to subway (0.5 mi)
     '''
-    bbls = []
-    file = open(path_to_bbls, 'rb')
-    for line in file:
-        bbls.append(line)
-    bbls = [float(i) for i in bbls]
+    bbls = pd.read_csv(path_to_bbls, header = None)
+    bbls = bbls.iloc[:,0]
     affected_properties = df.loc[df['bbl'].isin(bbls)]
-    df_minus_properties = df[~df.index.isin(affected_properties.index)]
-    df_minus_properties.reset_index(drop=True, inplace=True)
-    df_minus_properties = df_minus_properties.drop('bbl', axis = 1)
-    print(df_minus_properties.shape)
-    return affected_properties, df_minus_properties
+    affected_properties.reset_index(drop = True, inplace = True)
+
+    updated_affected_properties = affected_properties.drop(
+        'subwaydist', axis = 1)
+    updated_affected_properties = mpf.bbl_dist_to_subway(
+        updated_affected_properties, filepath = path_to_subway_dist)
+
+    affected_properties.drop('bbl', axis = 1, inplace = True)
+    updated_affected_properties.drop('bbl', axis = 1, inplace = True)
+
+    return affected_properties, updated_affected_properties

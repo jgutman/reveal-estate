@@ -1,9 +1,7 @@
 import pandas as pd
 import numpy as np
-import random
 from scipy import optimize
-import time
-import pickle
+import os, time, pickle
 from sklearn import preprocessing, model_selection, svm, metrics, tree
 from sklearn.metrics import *
 from sklearn.model_selection import KFold, GridSearchCV, RandomizedSearchCV
@@ -207,21 +205,17 @@ def write_dict_to_df(model_grid_results):
     return output
 
 
-def apply_model_to_lightrail(data_with_bbl, model, model_name,
-        y_pred_original, output_dir = "data/results",
-        bbl_path = "data/subway_bbls/Queens Light Rail BBL.csv"):
-    # Apply fitted model to affected properties near the Queens Light Rail
-    affected_properties, data_subset = dc.extract_affected_properties(
-        data_with_bbl, bbl_path)
+def output_results(model_grid_results, output_dir, y_test):
+    model_results_df = write_dict_to_df(model_grid_results)
+    model_results_df.to_csv(os.path.join(output_dir, 'results_dict.csv'),
+        columns = ['cv_score', 'test_score', 'hyperparams'])
 
-    X_updated, X_updated_for_modeling, y_orig = ppi.prepare_data(
-        affected_properties)
+    model_name, best_model = get_best_model(model_results)
+    best_y_pred = model_results[model_name]['predictions']
+    pd.DataFrame({'y_true': y_test, 'y_pred': best_y_pred}).to_csv(
+        os.path.join(output_dir, 'results_predictions.csv'))
 
-    output_price_increase = "{}/price_increase_{}.csv".format(
-        output_dir, model_name)
-
-    ppi.make_prediction(X_updated, X_updated_for_modeling,
-        y_pred_original, model, output = output_price_increase)
+    return model_name, best_model
 
 def main():
     warnings.filterwarnings("ignore")
@@ -252,19 +246,7 @@ def main():
     data_with_bbl = fm.get_data_for_model(data_path)
     data = data_with_bbl.drop('bbl', axis=1)
 
-    print("Creating target variable")
-    X, y = fm.create_target_var(data, 'price_per_sqft')
-
-    print("Splitting data into training and test sets")
-    X_train, X_test, y_train, y_test = dc.split_data(X, y)
-    print("Train: %s, Test: %s" % (X_train.shape, X_test.shape))
-    print("Train y: %s, Test y: %s" % (y_train.shape, y_test.shape))
-
-    print("Imputing missing values")
-    X_train, X_test = dc.fill_na(X_train, X_test)
-
-    print("Normalizing data")
-    X_train, X_test = dc.normalize(X_train, X_test)
+    X_train_raw, X_train, X_test, y_train, y_test = fm.preprocess_data(data)
 
     print("Fitting models")
     mods, params = define_model_params()
@@ -273,15 +255,10 @@ def main():
         max_per_grid = max_per_grid, output_dir = output_dir)
     print(model_results)
 
-    model_results_df = write_dict_to_df(model_results)
-    model_results_df.to_csv(''
-        columns = ['cv_score', 'test_score', 'hyperparams'])
+    model_name, best_model = output_results(model_results, output_dir, y_test)
 
-    model_name, best_model = get_best_model(model_results)
-    best_y_pred = model_results[model_name]['predictions']
-    pd.DataFrame({'y_true': y_test, 'y_pred': best_y_pred}).to_csv
-
-    apply_model_to_lightrail(data_with_bbl, best_model, model_name)
+    ppi.apply_model_to_lightrail(data_with_bbl, X_train_raw, best_model,
+        model_name, output_dir = output_dir)
 
 if __name__ == '__main__':
     main()
