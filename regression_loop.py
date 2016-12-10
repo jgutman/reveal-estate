@@ -118,7 +118,7 @@ def define_model_params():
 
 def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
         criterion_list = ['median_absolute_err', 'mean_absolute_err',
-            'accuracy_5', 'accuracy_10'], cv_folds = 5, max_per_grid = 50,
+            'accuracy_5', 'accuracy_10'], cv_folds = 5, max_per_grid = 2,
         output_dir = 'data/results'):
     """
     Returns a dictionary where the keys are model nicknames (strings)
@@ -182,14 +182,16 @@ def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
 
 
 def get_best_model(model_grid_results):
-    best_model_name, best_cv_score = "", np.Inf
-    for model_name, model in model_grid_results.items():
-        pass
-    return None
+    zipped_results = [(model_name, m[cv_score]) for model_name, m in
+        model_grid_results.items()]
+    zipped_results.sort(key = lambda x: x[1])
+    best_model_name = zipped_results[0][0]
+    best_model = model_grid_results[best_model_name]['model']
+    return best_model_name, best_model
 
 
-
-def apply_model_to_lightrail(data, model, model_name, output_dir,
+def apply_model_to_lightrail(data, model, model_name,
+        output_dir = "data/results",
         bbl_path = "data/subway_bbls/Queens Light Rail BBL.csv"):
     # Apply fitted model to affected properties near the Queens Light Rail
     affected_properties, data = dc.extract_affected_properties(
@@ -240,11 +242,11 @@ def main():
     print("Fitting models")
     mods, params = define_model_params()
     model_results = model_loop(model_type, mods, params,
-        X_train, X_test, y_train, y_test)
+        X_train, X_test, y_train, y_test, max_per_grid = 50)
     print(model_results)
+    model_name, best_model = get_best_model(model_results)
 
-    # apply_model_to_lightrail(estimators.best_estimator_,
-    #    model_name, output_dir)
+    apply_model_to_lightrail(data, best_model, model_name)
 
 if __name__ == '__main__':
     main()
