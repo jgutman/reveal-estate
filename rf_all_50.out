@@ -1,11 +1,9 @@
 Reading in data from data/merged/bronx_brooklyn_manhattan_queens_statenisland_2003_2016.csv
 Creating target variable
 Splitting data into training and test sets
-Train: (357460, 223), Test: (89365, 223)
+Train: (357460, 245), Test: (89365, 245)
 Train y: (357460,), Test y: (89365,)
 Imputing missing values
 Normalizing data
 Fitting models
 Fitting 5 folds for each of 50 candidates, totalling 250 fits
-rf: 1.1e+04 seconds elapsed
-model comparison loop: 1.1e+04 seconds elapsed

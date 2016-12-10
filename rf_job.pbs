@@ -5,6 +5,6 @@
 #PBS -M jg3862@nyu.edu
 #PBS -m ae
 
-source $HOME/miniconda3/bin/activate capstone
-cd $SCRATCH/reveal-estate
+source /home/jg3862/miniconda3/bin/activate capstone
+cd /scratch/jg3862/reveal-estate
 python3 regression_loop.py --model rf --data data/merged/bronx_brooklyn_manhattan_queens_statenisland_2003_2016.csv --iters 50 > rf_all_50.out
