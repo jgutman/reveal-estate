@@ -5,3 +5,5 @@ pyproj/*
 dbfpy*
 __pycache__/*
 data_size*.txt
+*.pbs.o*
+*.pbs.e*

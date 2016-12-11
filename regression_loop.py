@@ -86,11 +86,11 @@ def define_model_params():
             "learning_rate": [0.1, 0.2, 0.5, 1.0],
             "max_depth": [1, 3, 5, 10, 20, 50, 100],
             "max_features": [0.3, 0.4, 0.8],
-            "min_samples_split": [1, 3, 10, 20],
+            "min_samples_split": [2, 3, 5, 8, 10, 20],
             "min_samples_leaf": [1, 10, 20, 30]},
         'en' : {
-            "l1_ratio": [0.5, 0.7, 0.9, 1.0],
-            "alpha": [0.2, 0.5, 0.8, 1.0, 2.0]},
+            "l1_ratio": [0.2, 0.3, 0.4, 0.5, 0.7, 0.9, 1.0],
+            "alpha": np.logspace(-6, 3, 15)},
         'hr' : {
             "epsilon": [1.35, 1.6, 2.0, 2.5],
             "alpha" : [0.0001, 0.001, 0.005]},
@@ -123,7 +123,7 @@ def define_model_params():
 
 def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
         criterion_list = ['median_absolute_err', 'mean_absolute_err',
-            'accuracy_5', 'accuracy_10'], cv_folds = 5, max_per_grid = 2,
+            'accuracy_10', 'accuracy_15'], cv_folds = 5, max_per_grid = 2,
         output_dir = 'data/results'):
     """
     Returns a dictionary where the keys are model nicknames (strings)
