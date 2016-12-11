@@ -258,6 +258,8 @@ def main():
     print(model_results)
 
     model_name, best_model = output_results(model_results, output_dir, y_test)
+    pickle.dump(best_model, os.path.join(output_dir,
+        'pkl_models/{}_{}'.format(model_name, max_per_grid)))
 
     ppi.apply_model_to_lightrail(data_with_bbl, X_train_raw, best_model,
         model_name, output_dir = output_dir)
