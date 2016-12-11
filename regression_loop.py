@@ -86,11 +86,11 @@ def define_model_params():
             "learning_rate": [0.1, 0.2, 0.5, 1.0],
             "max_depth": [1, 3, 5, 10, 20, 50, 100],
             "max_features": [0.3, 0.4, 0.8],
-            "min_samples_split": [1, 3, 10, 20],
+            "min_samples_split": [2, 3, 5, 8, 10, 20],
             "min_samples_leaf": [1, 10, 20, 30]},
         'en' : {
             "l1_ratio": [0.5, 0.7, 0.9, 1.0],
-            "alpha": [0.2, 0.5, 0.8, 1.0, 2.0]},
+            "alpha": np.logspace(-6, 3, 15)},
         'hr' : {
             "epsilon": [1.35, 1.6, 2.0, 2.5],
             "alpha" : [0.0001, 0.001, 0.005]},
@@ -123,7 +123,7 @@ def define_model_params():
 
 def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
         criterion_list = ['median_absolute_err', 'mean_absolute_err',
-            'accuracy_5', 'accuracy_10'], cv_folds = 5, max_per_grid = 2,
+            'accuracy_10', 'accuracy_15'], cv_folds = 5, max_per_grid = 2,
         output_dir = 'data/results'):
     """
     Returns a dictionary where the keys are model nicknames (strings)
@@ -207,13 +207,17 @@ def write_dict_to_df(model_grid_results):
 
 def output_results(model_grid_results, output_dir, y_test):
     model_results_df = write_dict_to_df(model_grid_results)
-    model_results_df.to_csv(os.path.join(output_dir, 'results_dict.csv'),
-        columns = ['cv_score', 'test_score', 'hyperparams'])
+
 
     model_name, best_model = get_best_model(model_grid_results)
     best_y_pred = model_grid_results[model_name]['predictions']
+
+    model_results_df.to_csv(os.path.join(output_dir,
+        'results_dict_{}.csv'.format(model_name)),
+        columns = ['cv_score', 'test_score', 'hyperparams'])
     pd.DataFrame({'y_true': y_test, 'y_pred': best_y_pred}).to_csv(
-        os.path.join(output_dir, 'results_predictions.csv'))
+        os.path.join(output_dir,
+        'results_predictions_{}.csv'.format(model_name)))
 
     return model_name, best_model
 
@@ -258,6 +262,8 @@ def main():
     print(model_results)
 
     model_name, best_model = output_results(model_results, output_dir, y_test)
+    pickle.dump(best_model, os.path.join(output_dir,
+        'pkl_models/{}_{}'.format(model_name, max_per_grid)))
 
     ppi.apply_model_to_lightrail(data_with_bbl, X_train_raw, best_model,
         model_name, output_dir = output_dir)
