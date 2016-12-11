@@ -56,7 +56,7 @@ def fill_na(X_train, X_test):
         X_test: numpy ndarray with no NaN values, ready for testing.
 
     '''
-    missing_imputer = Imputer(strategy = "mean", axis=0)
+    missing_imputer = Imputer(strategy = "median", axis=0)
     X_train = missing_imputer.fit_transform(X_train)
     X_test = missing_imputer.transform(X_test)
     return X_train, X_test

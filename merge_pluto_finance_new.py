@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 import pandas as pd
 import numpy as np
-# from convert_xy import convert_df
+from convert_xy import convert_df
 import math
 import pandas as pd
 from scipy import spatial
@@ -23,7 +23,7 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
     initials = {"manhattan" : "MN", "brooklyn" : "BK", "bronx" : "BX",
         "queens" : "QN", "statenisland" : "SI"}
 
-    string_cols = ['BBL', 'BldgClass', 'Borough', 'BuiltCode', 'Council',
+    string_cols = ['BldgClass', 'Borough', 'BuiltCode', 'Council',
         'Ext', 'HistDist', 'IrrLotCode', 'Landmark', 'LandUse', 'LotType',
         'LtdHeight', 'OwnerType', 'ProxCode', 'SchoolDist', 'SplitZone']
     string_cols = {a: str for a in string_cols}
@@ -34,7 +34,7 @@ def read_in_pluto(boros, data_dir = "data/nyc_pluto_16v1"):
         'YearAlter1', 'YearAlter2', 'YearBuilt', 'ZipCode']
     float_cols = {a: np.float64 for a in float_cols}
 
-    int_cols = ['Block', 'BoroCode',  'CondoNo', 'CD']
+    int_cols = ['BBL', 'Block', 'BoroCode',  'CondoNo', 'CD']
     int_cols = {a: np.int64 for a in int_cols}
 
     cols_dtype = dict(string_cols, **float_cols)
@@ -207,7 +207,7 @@ def add_BBL(processed_data):
     bbl_formatted = pd.Series(["%01d%05d%04d" %
         (row.borough, row.block, row.lot) for row in bbl_columns],
         index = processed_data.index, dtype='int64')
-    processed_data["bbl"] = bbl_formatted.astype(str)
+    processed_data["bbl"] = bbl_formatted
     return processed_data
 
 
@@ -309,8 +309,9 @@ def get_finance_condo_lot(pluto, finance, dtm):
     finance_condos_only = subset_data(finance_condos_only,
         ['bbl_pluto', 'bbl_finance'])
     finance_condos_only = finance_condos_only.loc[lambda df:
-            # np.floor(df.bbl_pluto / 1e4) == np.floor(df.bbl_finance / 1e4)]
-            [x[0:6] == y[0:6] for x,y in zip(df.bbl_finance, df.bbl_pluto)]]
+        # np.floor(df.bbl_pluto / 1e4) == np.floor(df.bbl_finance / 1e4)]
+        [str(x)[0:6] == str(y)[0:6] for x, y in
+            zip(df.bbl_finance, df.bbl_pluto)]]
 
     # get a list of bbls that are not condos (same in pluto and finance)
     standard_bbls = list(set(finance.bbl).difference(
@@ -374,6 +375,8 @@ def bbl_dist_to_subway(data,
     subwaydist = pd.read_csv(filepath)
     subwaydist = subwaydist.drop(
         ['latitude','longitude'], axis = 1)
+    data['bbl'] = data['bbl'].astype(int)
+    subwaydist['bbl'] = subwaydist['bbl'].astype(int)
     return data.merge(subwaydist, how = 'left', on = ['bbl'])
 
 
@@ -382,6 +385,7 @@ def bbl_dist_to_open_NYC_data(data,
     other_distances = pd.read_csv(filepath)
     other_distances = other_distances.drop(
         ['latitude', 'longitude', 'zipcode'], axis = 1)
+    other_distances['bbl'] = other_distances['bbl'].astype(int)
     return data.merge(other_distances, how = 'left', on = ['bbl'])
 
 

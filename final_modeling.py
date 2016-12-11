@@ -40,6 +40,7 @@ def get_data_for_model(data_path = \
     # drop columns that are not needed or are redundant
     df = dc.drop_cols(df, ['sale_date', 'sale_price', 'zipcode',
         'latitude', 'longitude'])
+    df['bbl'] = df['bbl'].astype(int)
     return df
 
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -l mem=128GB
-#PBS -l walltime=4:00:00
+#PBS -l walltime=12:00:00
 #PBS -l nodes=2:ppn=20
 #PBS -M jacqueline.gutman@gmail.com
 #PBS -m ae
