@@ -13,6 +13,8 @@ Python version 3.5.2
 
 * Review and follow instructions for downloading Digital Tax Map data in the [DTM README](./download_dtm.md)
 
+* Extract distance to subway data and other open NYC data (add details here).
+
 * Merge PLUTO and Department of Finance data for specified years and boroughs by running `python3 merge_pluto_finance_new.py --borough all --year all` to obtain and merge data for all boroughs and all years (5 boroughs, 2003-2016), or by running `python3 merge_pluto_finance_new.py --borough {BOROUGH} {BOROUGH} --year {YEAR} {YEAR}` for whatever boroughs and years desired. See `python3 merge_pluto_finance_new.py --help` for details.
 
-* Fit Linear Regression or Random Forest Model to merged data set by running `python3 final_modeling.py --data {path_to_merged_csv} --model {LR or RF}`. See `python3 final_modeling.py --help` for details.
+* Fit Linear Regression or Random Forest Model to merged data set by running `python3 regression_loop.py --data {path_to_merged_csv} --model {lr, rf, ada, bag, et, gb, en, hr, br, ll, lasso, ridge, sgd, svr, linsvr} --iters {50}`. See `python3 regression_loop.py --help` for details.
