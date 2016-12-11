@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 import pandas as pd
 import numpy as np
-from convert_xy import convert_df
+# from convert_xy import convert_df
 import math
 import pandas as pd
 from scipy import spatial
@@ -141,8 +141,8 @@ def merge_population_data(pluto, initials,
 
 def censor(data, var, upper_limit, lower_limit = 0):
     df = data.copy()
-    check_limits = (df[var] >= upper_limit) | (df[var] <= lower_limit)
-    df.loc[check_limits, var] = np.nan
+    df.loc[df[var] > upper_limit, var] = upper_limit
+    df.loc[df[var] <= lower_limit, var] = np.nan
     return df
 
 

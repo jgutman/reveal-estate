@@ -102,7 +102,6 @@ def define_model_params():
         'lasso' : {
             "alpha": np.logspace(-6, 3, 15),
             "selection": ["random", "cyclic"]},
-
         'ridge' : {
             "alpha": np.logspace(-6, 3, 15)},
         'sgd' : {
@@ -207,8 +206,6 @@ def write_dict_to_df(model_grid_results):
 
 def output_results(model_grid_results, output_dir, y_test):
     model_results_df = write_dict_to_df(model_grid_results)
-
-
     model_name, best_model = get_best_model(model_grid_results)
     best_y_pred = model_grid_results[model_name]['predictions']
 
@@ -218,7 +215,6 @@ def output_results(model_grid_results, output_dir, y_test):
     pd.DataFrame({'y_true': y_test, 'y_pred': best_y_pred}).to_csv(
         os.path.join(output_dir,
         'results_predictions_{}.csv'.format(model_name)))
-
     return model_name, best_model
 
 def main():
