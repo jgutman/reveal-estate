@@ -140,15 +140,17 @@ def merge_population_data(pluto, initials,
 
 
 def censor(data, var, upper_limit, lower_limit = 0):
-    check_limits = (data[var] >= upper_limit) | (data[var] <= upper_limit)
-    data.loc[check_limits, var] = np.nan
-    return data
+    df = data.copy()
+    check_limits = (df[var] >= upper_limit) | (df[var] <= lower_limit)
+    df.loc[check_limits, var] = np.nan
+    return df
 
 
 def binarize(data, var):
-    data.loc[data[var] > 0, var] = 1
-    data.loc[data[var] < 0, var] = np.nan
-    return(data)
+    df = data.copy()
+    df.loc[df[var] > 0, var] = 1
+    df.loc[df[var] < 0, var] = np.nan
+    return df
 
 
 def read_in_boro_year_data(boro, year, data_dir = "data/finance_sales"):
@@ -254,14 +256,14 @@ def read_in_dtm(boros, data_dir = 'data/dtm',
         Pandas DataFrame
     """
     columns = ['CONDO_BORO', 'CONDO_NUMB', 'UNIT_BLOCK',
-               'UNIT_LOT', 'UNIT_BBL', 'UNIT_DESIG']
+               'UNIT_LOT', 'UNIT_BBL']
     boro_names = ['manhattan', 'bronx', 'brooklyn', 'queens', 'statenisland']
     boro_codes = dict(zip(boro_names, range(1,6)))
     dtm = pd.read_csv(os.path.join(data_dir, filename), usecols=columns)
-    dtm.dropna(how = 'all', inplace = True)
     dtm.columns = [col.strip().lower() for col in dtm.columns]
     dtm = dtm.dropna(subset = ['unit_bbl', 'condo_boro', 'condo_numb'])
-    dtm.unit_bbl = dtm.unit_bbl.astype(int).astype(str)
+    dtm[['unit_bbl', 'condo_boro', 'condo_numb']]  = dtm[[
+        'unit_bbl', 'condo_boro', 'condo_numb']].astype(int)
     dtm = dtm.loc[dtm.condo_boro.isin(
         [boro_codes.get(boro) for boro in boros])]
     return dtm
