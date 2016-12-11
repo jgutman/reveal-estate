@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 import pandas as pd
 import numpy as np
-# from convert_xy import convert_df
+from convert_xy import convert_df
 import math
 import pandas as pd
 from scipy import spatial
@@ -374,6 +374,7 @@ def bbl_dist_to_subway(data,
     subwaydist = pd.read_csv(filepath)
     subwaydist = subwaydist.drop(
         ['latitude','longitude'], axis = 1)
+    data['bbl'] = data['bbl'].astype(int)
     return data.merge(subwaydist, how = 'left', on = ['bbl'])
 
 
@@ -382,6 +383,7 @@ def bbl_dist_to_open_NYC_data(data,
     other_distances = pd.read_csv(filepath)
     other_distances = other_distances.drop(
         ['latitude', 'longitude', 'zipcode'], axis = 1)
+    other_distances['bbl'] = other_distances['bbl'].astype(int)
     return data.merge(other_distances, how = 'left', on = ['bbl'])
 
 
