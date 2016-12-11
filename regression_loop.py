@@ -89,7 +89,7 @@ def define_model_params():
             "min_samples_split": [2, 3, 5, 8, 10, 20],
             "min_samples_leaf": [1, 10, 20, 30]},
         'en' : {
-            "l1_ratio": [0.5, 0.7, 0.9, 1.0],
+            "l1_ratio": [0.2, 0.3, 0.4, 0.5, 0.7, 0.9, 1.0],
             "alpha": np.logspace(-6, 3, 15)},
         'hr' : {
             "epsilon": [1.35, 1.6, 2.0, 2.5],

@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 import pandas as pd
 import numpy as np
-from convert_xy import convert_df
+# from convert_xy import convert_df
 import math
 import pandas as pd
 from scipy import spatial
