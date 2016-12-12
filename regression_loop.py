@@ -78,16 +78,16 @@ def define_model_params():
             "bootstrap_features": ["True", "False"]},
         'et' : {
             "max_features": [0.5, 0.8, "auto", "sqrt"],
-            "max_depth": [1, 3, 5, 10, 20, 50, 100],
-            "min_samples_leaf": [1, 10, 20, 30],
-            "min_samples_split": [1, 3, 10, 20]},
+            "max_depth": [1, 3, 5, 10, 20, 50],
+            "min_samples_leaf": [1, 10, 20],
+            "min_samples_split": [2, 3, 5, 8, 10, 20]},
         'gb' : {
             "loss": ["ls", "lad", "huber"],
             "learning_rate": [0.1, 0.2, 0.5, 1.0],
-            "max_depth": [1, 3, 5, 10, 20, 50, 100],
+            "max_depth": [1, 3, 5, 10, 20, 50],
             "max_features": [0.3, 0.4, 0.8],
             "min_samples_split": [2, 3, 5, 8, 10, 20],
-            "min_samples_leaf": [1, 10, 20, 30]},
+            "min_samples_leaf": [1, 10, 20]},
         'en' : {
             "l1_ratio": [0.2, 0.3, 0.4, 0.5, 0.7, 0.9, 1.0],
             "alpha": np.logspace(-6, 3, 15)},
@@ -261,7 +261,7 @@ def main():
     path = os.path.join(output_dir, 'pkl_models')
     filename = '{}_{}.pkl'.format(model_name, max_per_grid)
     with open(os.path.join(path, filename), 'wb') as f:
-	pickle.dump(best_model, f)
+        pickle.dump(best_model, f)
 
     ppi.apply_model_to_lightrail(data_with_bbl, X_train_raw, best_model,
         model_name, output_dir = output_dir)
