@@ -116,8 +116,9 @@ def define_model_params():
         'linsvr' : {
             "C": [0.0001, 0.001, 0.01, 0.1, 1, 10],
             "epsilon": [0.05, 0.1, 0.2, 0.5]},
-        'll' : {},
-        'lr' : {}
+        'll' : {"alpha": np.logspace(-6, 3, 15)},
+        'lr' : {"fit_intercept": [True], 
+		"normalize": [True, False]}
     }
     return mods, params
 
