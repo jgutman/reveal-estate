@@ -81,13 +81,13 @@ def define_model_params():
             "n_estimators": [10, 20, 50, 100, 200]},
         'et' : {
             "max_features": [0.5, 0.8, "auto", "sqrt"],
-            "max_depth": [1, 3, 5, 10, 20, 50, 100],
-            "min_samples_leaf": [1, 10, 20, 30],
-            "min_samples_split": [1, 3, 10, 20]},
+            "max_depth": [1, 3, 5, 10, 20, 50],
+            "min_samples_leaf": [1, 10, 20],
+            "min_samples_split": [2, 3, 5, 8, 10, 20]},
         'gb' : {
             "loss": ["ls", "lad", "huber"],
             "learning_rate": [0.1, 0.2, 0.5, 1.0],
-            "max_depth": [1, 3, 5, 10, 20, 50, 100],
+            "max_depth": [1, 3, 5, 10, 20],
             "max_features": [0.3, 0.4, 0.8],
             "min_samples_split": [2, 3, 5, 8, 10, 20],
             "min_samples_leaf": [1, 10, 20, 30],
@@ -119,8 +119,9 @@ def define_model_params():
         'linsvr' : {
             "C": [0.0001, 0.001, 0.01, 0.1, 1, 10],
             "epsilon": [0.05, 0.1, 0.2, 0.5]},
-        'll' : {},
-        'lr' : {}
+        'll' : {"alpha": np.logspace(-6, 3, 15)},
+        'lr' : {"fit_intercept": [True],
+		"normalize": [True, False]}
     }
     return mods, params
 
