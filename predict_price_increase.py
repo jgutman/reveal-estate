@@ -61,6 +61,7 @@ def make_prediction(X_pre_lightrail, X_post_lightrail, y_true, model,
         'y_pred_postlightrail': predicted_post})
     predictions.to_csv(output)
     print("Pre and post-lightrail predictions written to {}".format(output))
+    return predictions
 
 def apply_model_to_lightrail(data_with_bbl, X_train_raw, model, model_name,
         output_dir = "data/results",
@@ -75,5 +76,5 @@ def apply_model_to_lightrail(data_with_bbl, X_train_raw, model, model_name,
     output_price_increase = "{}/price_increase_{}.csv".format(
         output_dir, model_name)
 
-    make_prediction(X_pre_lightrail, X_post_lightrail, y_true, model,
+    return make_prediction(X_pre_lightrail, X_post_lightrail, y_true, model,
         output = output_price_increase)

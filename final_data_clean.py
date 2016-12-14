@@ -107,7 +107,8 @@ def extract_affected_properties(df, path_to_bbls,
     updated_affected_properties = bbl_dist_to_subway(
         updated_affected_properties, filepath = path_to_subway_dist)
 
-    affected_properties.drop('bbl', axis = 1, inplace = True)
-    updated_affected_properties.drop('bbl', axis = 1, inplace = True)
+    affected_properties = affected_properties.drop('bbl', axis = 1)
+    updated_affected_properties = updated_affected_properties.drop(
+        'bbl', axis = 1)
 
     return affected_properties, updated_affected_properties
