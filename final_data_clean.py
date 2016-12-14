@@ -102,6 +102,10 @@ def extract_affected_properties(df, path_to_bbls,
     affected_properties = df.loc[df['bbl'].isin(bbls)]
     affected_properties.reset_index(drop = True, inplace = True)
 
+    grouped = affected_properties.groupby(['bbl'])
+    max_idx_by_bbl = grouped['sale_year'].idxmax().values
+    affected_properties = affected_properties.loc[max_idx_by_bbl]
+
     updated_affected_properties = affected_properties.drop(
         'subwaydist', axis = 1)
     updated_affected_properties = bbl_dist_to_subway(
