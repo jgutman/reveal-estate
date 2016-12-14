@@ -46,20 +46,20 @@ class Timer(object):
 def define_model_params():
     mods = {
         'lr': LinearRegression(),
-        'rf': RandomForestRegressor(n_estimators=50),
-        'ada': AdaBoostRegressor(n_estimators=50),
-        'bag': BaggingRegressor(n_estimators=50),
-        'et': ExtraTreesRegressor(n_estimators=50),
-        'gb': GradientBoostingRegressor(n_estimators=50),
-        'en': ElasticNet(),
+        'rf': RandomForestRegressor(random_state = 300),
+        'ada': AdaBoostRegressor(random_state = 300),
+        'bag': BaggingRegressor(random_state = 300),
+        'et': ExtraTreesRegressor(random_state = 300),
+        'gb': GradientBoostingRegressor(random_state = 300),
+        'en': ElasticNet(random_state = 300),
         'hr': HuberRegressor(),
-        'br': BayesianRidge(n_iter=100),
+        'br': BayesianRidge(n_iter = 100),
         'll': LassoLars(),
-        'lasso': Lasso(),
-        'ridge': Ridge(),
-        'sgd': SGDRegressor(),
+        'lasso': Lasso(random_state = 300),
+        'ridge': Ridge(random_state = 300),
+        'sgd': SGDRegressor(random_state = 300),
         'svr': SVR(),
-        'linsvr': LinearSVR()
+        'linsvr': LinearSVR(random_state = 300)
     }
 
     params = {
@@ -68,14 +68,17 @@ def define_model_params():
             "max_features": [0.3, 0.4, 0.6, 0.8],
             "min_samples_split": [2, 4, 8, 10, 20],
             "min_samples_leaf": [1, 10, 20, 30],
-            "bootstrap": ["True", "False"]},
+            "bootstrap": ["True", "False"],
+            "n_estimators": [10, 20, 50, 100, 200]},
         'ada' : {
             "learning_rate": [0.1, 0.5, 1.0, 1.5],
-            "loss" : ["linear", "square", "exponential"]},
+            "loss" : ["linear", "square", "exponential"],
+            "n_estimators": [10, 20, 50, 100, 200]},
         'bag' : {
             "max_features": [0.3, 0.5, 0.8, 1.0],
             "max_samples": [0.3, 0.5, 1.0],
-            "bootstrap_features": ["True", "False"]},
+            "bootstrap_features": ["True", "False"],
+            "n_estimators": [10, 20, 50, 100, 200]},
         'et' : {
             "max_features": [0.5, 0.8, "auto", "sqrt"],
             "max_depth": [1, 3, 5, 10, 20, 50, 100],
@@ -87,7 +90,8 @@ def define_model_params():
             "max_depth": [1, 3, 5, 10, 20, 50, 100],
             "max_features": [0.3, 0.4, 0.8],
             "min_samples_split": [2, 3, 5, 8, 10, 20],
-            "min_samples_leaf": [1, 10, 20, 30]},
+            "min_samples_leaf": [1, 10, 20, 30],
+            "n_estimators": [10, 20, 50]},
         'en' : {
             "l1_ratio": [0.2, 0.3, 0.4, 0.5, 0.7, 0.9, 1.0],
             "alpha": np.logspace(-6, 3, 15)},
@@ -261,7 +265,7 @@ def main():
     path = os.path.join(output_dir, 'pkl_models')
     filename = '{}_{}.pkl'.format(model_name, max_per_grid)
     with open(os.path.join(path, filename), 'wb') as f:
-	pickle.dump(best_model, f)
+        pickle.dump(best_model, f)
 
     ppi.apply_model_to_lightrail(data_with_bbl, X_train_raw, best_model,
         model_name, output_dir = output_dir)
