@@ -71,7 +71,7 @@ def apply_model_to_lightrail(data_with_bbl, X_train_raw, model, model_name,
         output_dir = "data/results",
         bbl_path = "data/subway_bbls/QueensLightrail_full1.csv"):
     # Apply fitted model to affected properties near the Queens Light Rail
-    affected_properties, updated_properties, affected_bbls =
+    affected_properties, updated_properties, affected_bbls = \
         dc.extract_affected_properties(data_with_bbl, bbl_path)
 
     X_pre_lightrail, X_post_lightrail, y_true = prepare_data(X_train_raw,
