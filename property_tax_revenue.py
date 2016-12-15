@@ -43,7 +43,7 @@ def main():
         "bronx_brooklyn_manhattan_queens_statenisland_2003_2016"))
 
     args = parser.parse_args()
-    datapath, data_original, bbl_path = args.datapath,
+    datapath, data_original, bbl_path = args.datapath, \
         args.data_original, args.bbl_path
 
     price_increase = pd.read_csv(datapath)
