@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn import linear_model
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import median_absolute_error
 from sklearn.ensemble import RandomForestRegressor
 from argparse import ArgumentParser
 import final_data_clean as dc
@@ -76,11 +76,10 @@ def fit_LR(X_train, X_test, y_train, y_test):
     '''
     regr = linear_model.LinearRegression()
     regr.fit(X_train, y_train)
-    mse = mean_squared_error(y_test, regr.predict(X_test))
     predicted = regr.predict(X_test)
     percent_diff = 100*(np.abs(predicted - y_test).astype(float) / y_test)
     acc = 100 * (sum(i < 10. for i in percent_diff)/ len(percent_diff))
-    print('Mean squared error for Linear Regression model: ', mse)
+    print('Median absolute error for Linear Regression model: ', median_absolute_error(y_test, predicted))
     print('\nAccuracy (within 10% of true value): ', acc)
     return regr
 
@@ -96,8 +95,8 @@ def fit_RF(X_train, X_test, y_train, y_test):
     predicted = RF_reg_final.predict(X_test)
     percent_diff = 100*(np.abs(predicted - y_test).astype(float) / y_test)
     acc = 100 * (sum(i < 10. for i in percent_diff)/ len(percent_diff))
-    print('Mean squared error for Random Forest model: ', mean_squared_error(
-        y_test, RF_reg_final.predict(X_test)))
+    print('Median absolute error for Random Forest model: ',
+        median_absolute_error(y_test, predicted))
     print('\nAccuracy (within 10% of true value): ', acc)
     return RF_reg_final
 
