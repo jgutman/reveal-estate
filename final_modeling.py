@@ -86,7 +86,12 @@ def fit_LR(X_train, X_test, y_train, y_test):
 
 
 def fit_RF(X_train, X_test, y_train, y_test):
-    RF_reg_final = RandomForestRegressor(n_estimators=100, n_jobs = -1)
+    RF_reg_final = RandomForestRegressor(bootstrap='False', criterion='mae',
+        max_depth=100, max_features=0.4, max_leaf_nodes=None,
+        min_impurity_split=1e-07, min_samples_leaf=10, min_samples_split=20,
+        min_weight_fraction_leaf=0.0, n_estimators=50, n_jobs=-1,
+        oob_score=False, random_state=300, verbose=0, warm_start=False)
+
     RF_reg_final.fit(X_train, y_train)
     predicted = RF_reg_final.predict(X_test)
     percent_diff = 100*(np.abs(predicted - y_test).astype(float) / y_test)
@@ -117,23 +122,23 @@ def main():
     data_with_bbl = get_data_for_model(data_path)
     data = data_with_bbl.drop('bbl', axis=1)
 
-    affected_bbl_path = "data/subway_bbls/Queens Light Rail BBL.csv"
-    print("Extracting affected BBLs from %s" % affected_bbl_path)
-    affected_properties, updated_properties = dc.extract_affected_properties(
-        data_with_bbl, affected_bbl_path)
-
+    affected_bbl_path = "data/subway_bbls/QueensLightrail_full1.csv"
     X_train_raw, X_train, X_test, y_train, y_test = preprocess_data(data)
 
     if model_type == 'lr':
         print("Fitting Linear Regression model")
         linear_reg = fit_LR(X_train, X_test, y_train, y_test)
+        print("Extracting affected BBLs from %s" % affected_bbl_path)
         ppi.apply_model_to_lightrail(data_with_bbl, X_train_raw, linear_reg,
-            'lr_demo', output_dir = 'data/results')
+            model_name = 'lr_demo',
+            output_dir = 'data/results', bbl_path = affected_bbl_path)
     elif model_type == 'rf':
         print("Fitting Random Forest model")
         random_forest = fit_RF(X_train, X_test, y_train, y_test)
+        print("Extracting affected BBLs from %s" % affected_bbl_path)
         ppi.apply_model_to_lightrail(data_with_bbl, X_train_raw, random_forest,
-            'rf_demo', output_dir = 'data/results')
+            model_name = 'rf_demo',
+            output_dir = 'data/results', bbl_path = affected_bbl_path)
     else:
         print("Please enter a valid model name (LR for Linear Regression or RF for Random Forest.")
 

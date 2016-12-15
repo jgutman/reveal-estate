@@ -24,6 +24,9 @@ def prepare_data(X_train_raw, affected_properties, updated_affected_properties):
         y_true: true outcome data for affected properties prior to shift
 
     '''
+    affected_properties['sale_year'] = 2016
+    updated_affected_properties['sale_year'] = 2016
+
     X_pre_lightrail, y_true = fm.create_target_var(affected_properties,
         'price_per_sqft')
     X_post_lightrail, _ = fm.create_target_var(updated_affected_properties,
@@ -43,7 +46,7 @@ def prepare_data(X_train_raw, affected_properties, updated_affected_properties):
 
 
 def make_prediction(X_pre_lightrail, X_post_lightrail, y_true, model,
-        output = "price_increase.csv"):
+        bbl_col, output = "price_increase.csv"):
     '''
     Predicts price_per_sqft for the dataframe with original and updated subway
     information, and creates Pandas dataframe with affected BBLs, the original
@@ -58,17 +61,18 @@ def make_prediction(X_pre_lightrail, X_post_lightrail, y_true, model,
     predicted_post = model.predict(X_post_lightrail)
     predictions = pd.DataFrame({'y_true': y_true,
         'y_pred_prelightrail': predicted_pre,
-        'y_pred_postlightrail': predicted_post})
-    predictions.to_csv(output)
+        'y_pred_postlightrail': predicted_post,
+        'bbl': bbl_col})
+    predictions.to_csv(output, index = False)
     print("Pre and post-lightrail predictions written to {}".format(output))
     return predictions
 
 def apply_model_to_lightrail(data_with_bbl, X_train_raw, model, model_name,
         output_dir = "data/results",
-        bbl_path = "data/subway_bbls/Queens Light Rail BBL.csv"):
+        bbl_path = "data/subway_bbls/QueensLightrail_full1.csv"):
     # Apply fitted model to affected properties near the Queens Light Rail
-    affected_properties, updated_properties = dc.extract_affected_properties(
-        data_with_bbl, bbl_path)
+    affected_properties, updated_properties, affected_bbls =
+        dc.extract_affected_properties(data_with_bbl, bbl_path)
 
     X_pre_lightrail, X_post_lightrail, y_true = prepare_data(X_train_raw,
         affected_properties, updated_properties)
@@ -77,4 +81,4 @@ def apply_model_to_lightrail(data_with_bbl, X_train_raw, model, model_name,
         output_dir, model_name)
 
     return make_prediction(X_pre_lightrail, X_post_lightrail, y_true, model,
-        output = output_price_increase)
+        bbl_col = affected_bbls, output = output_price_increase)

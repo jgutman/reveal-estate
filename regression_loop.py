@@ -179,12 +179,15 @@ def model_loop(models_to_run, mods, params, X_train, X_test, y_train, y_test,
                     estimators.best_estimator_, X_test, y_test)))
                 print(test_score)
 
-                y_pred = estimators.predict(X_test)
+                y_pred_test = estimators.predict(X_test)
+                y_pred_train = estimators.predict(X_train)
+
                 model_grid_results[model_name] = {
                     'cv_score': cv_score,
                     'test_score': test_score,
                     'hyperparams': estimators.best_params_,
-                    'predictions': y_pred,
+                    'predictions_test': y_pred_test,
+                    'predictions_train': y_pred_train,
                     'model': estimators.best_estimator_
                 }
     print("Models fitted: {}".format(model_grid_results.keys()))
@@ -209,17 +212,25 @@ def write_dict_to_df(model_grid_results):
     return output
 
 
-def output_results(model_grid_results, output_dir, y_test):
+def output_results(model_grid_results, output_dir, y_train, y_test,
+    bbl_train, bbl_test):
     model_results_df = write_dict_to_df(model_grid_results)
     model_name, best_model = get_best_model(model_grid_results)
-    best_y_pred = model_grid_results[model_name]['predictions']
+    y_pred_test = model_grid_results[model_name]['predictions_test']
+    y_pred_train = model_grid_results[model_name]['predictions_train']
 
     model_results_df.to_csv(os.path.join(output_dir,
         'results_dict_{}.csv'.format(model_name)),
         columns = ['cv_score', 'test_score', 'hyperparams'])
-    pd.DataFrame({'y_true': y_test, 'y_pred': best_y_pred}).to_csv(
-        os.path.join(output_dir,
-        'results_predictions_{}.csv'.format(model_name)))
+    output_test = os.path.join(output_dir,
+        'results_predictions_{}_{}.csv'.format(model_name, 'test'))
+    output_train = os.path.join(output_dir,
+            'results_predictions_{}_{}.csv'.format(model_name, 'train'))
+
+    pd.DataFrame({'bbl': bbl_test, 'y_true': y_test,
+        'y_pred': y_pred_test}).to_csv(output_test, index = False)
+    pd.DataFrame({'bbl': bbl_train, 'y_true': y_train,
+        'y_pred': y_pred_train}).to_csv(output_train, index = False)
     return model_name, best_model
 
 def main():
@@ -253,7 +264,10 @@ def main():
     data_with_bbl = fm.get_data_for_model(data_path)
     data = data_with_bbl.drop('bbl', axis=1)
 
+    print("Preprocessing data")
     X_train_raw, X_train, X_test, y_train, y_test = fm.preprocess_data(data)
+    train_bbl = data.bbl.ix[X_train.index]
+    test_bbl = data.bbl.ix[X_test.index]
 
     print("Fitting models")
     mods, params = define_model_params()
@@ -262,7 +276,8 @@ def main():
         max_per_grid = max_per_grid, output_dir = output_dir)
     print(model_results)
 
-    model_name, best_model = output_results(model_results, output_dir, y_test)
+    model_name, best_model = output_results(model_results, output_dir, y_train,
+        y_test, train_bbl, test_bbl)
     path = os.path.join(output_dir, 'pkl_models')
     filename = '{}_{}.pkl'.format(model_name, max_per_grid)
     with open(os.path.join(path, filename), 'wb') as f:
