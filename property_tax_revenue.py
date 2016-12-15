@@ -5,7 +5,7 @@ import final_data_clean as dc
 import os
 
 
-def construct_price_increase(price_increase, data_with_bbl):
+def construct_price_increase(price_increase, data_with_bbl, bbl_path):
     data_with_bbl = dc.drop_cols(data_with_bbl, list())
     affected_properties, _, bbls = dc.extract_affected_properties(
         data_with_bbl, bbl_path)
@@ -49,7 +49,8 @@ def main():
     price_increase = pd.read_csv(datapath)
     data_with_bbl = pd.read_csv(data_original, usecols = ['bbl', 'sale_year',
         'sale_price', 'price_per_sqft', 'subwaydist'])
-    price_increase = construct_price_increase(price_increase, data_with_bbl)
+    price_increase = construct_price_increase(price_increase, data_with_bbl,
+        bbl_path)
     price_increase = calculate_updated_sale(price_increase)
 
     filename = 'affected_properties_tax_calculation.csv'
