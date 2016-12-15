@@ -69,21 +69,22 @@ def define_model_params():
             "min_samples_split": [2, 4, 8, 10, 20],
             "min_samples_leaf": [1, 10, 20, 30],
             "bootstrap": ["True", "False"],
-            "n_estimators": [10, 20, 50, 100, 200]},
+            "n_estimators": [10, 20, 50, 100]},
         'ada' : {
             "learning_rate": [0.1, 0.5, 1.0, 1.5],
             "loss" : ["linear", "square", "exponential"],
-            "n_estimators": [10, 20, 50, 100, 200]},
+            "n_estimators": [10, 20, 50, 100]},
         'bag' : {
             "max_features": [0.3, 0.5, 0.8, 1.0],
             "max_samples": [0.3, 0.5, 1.0],
             "bootstrap_features": ["True", "False"],
-            "n_estimators": [10, 20, 50, 100, 200]},
+            "n_estimators": [10, 20, 50, 100]},
         'et' : {
             "max_features": [0.5, 0.8, "auto", "sqrt"],
             "max_depth": [1, 3, 5, 10, 20, 50],
             "min_samples_leaf": [1, 10, 20],
-            "min_samples_split": [2, 3, 5, 8, 10, 20]},
+            "min_samples_split": [2, 3, 5, 8, 10, 20],
+            "n_estimators": [10, 20, 50, 100]},
         'gb' : {
             "loss": ["ls", "lad", "huber"],
             "learning_rate": [0.1, 0.2, 0.5, 1.0],
