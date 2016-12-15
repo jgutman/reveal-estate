@@ -267,8 +267,8 @@ def main():
 
     print("Preprocessing data")
     X_train_raw, X_train, X_test, y_train, y_test = fm.preprocess_data(data)
-    train_bbl = data['bbl'].loc[X_train.index]
-    test_bbl = data['bbl'].loc[X_test.index]
+    train_bbl = data_with_bbl['bbl'].loc[X_train.index]
+    test_bbl = data_with_bbl['bbl'].loc[X_test.index]
 
     print("Fitting models")
     mods, params = define_model_params()
