@@ -33,11 +33,11 @@ def compute_tax_revenue(data, tax_rate = .00796):
 def main():
     parser = ArgumentParser(description =
         "Predict the increase in property tax revenue with proposed lightrail")
-    parser.add_argument("--data", dest = "datapath",
+    parser.add_argument("--increase", dest = "datapath",
         help="Path to data with predicted increase in price per sqft.")
     parser.add_argument("--data", dest = "data_original",
         help="Path to merged data used to train the model.")
-    parser.set_defaults(datapath = "data/results/price_increase_rf.csv",
+    parser.set_defaults(datapath = "data/results/price_increase_gb.csv",
         bbl_path = "data/subway_bbls/QueensLightrail_full1.csv",
         data_original = "{}/{}.csv".format("data/merged",
         "bronx_brooklyn_manhattan_queens_statenisland_2003_2016"))
@@ -53,7 +53,7 @@ def main():
         bbl_path)
     price_increase = calculate_updated_sale(price_increase)
 
-    filename = 'affected_properties_tax_calculation.csv'
+    filename = 'affected_properties_tax_calculation_gb.csv'
     price_increase.to_csv(os.path.join('data/results', filename),
         index = False)
 

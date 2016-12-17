@@ -4,7 +4,6 @@ import final_modeling as fm
 import final_data_clean as dc
 
 def prepare_data(X_train_raw, affected_properties, updated_affected_properties):
-
     '''
     Prepares the dataframe of affected properties to have the model applied.
 
