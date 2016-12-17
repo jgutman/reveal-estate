@@ -1,6 +1,8 @@
 # reveal-estate
 Fall 2016 Capstone Project for Nora Barry, Laura Buchanan, Jacqueline Gutman
 
+Final paper in [RevealEstate.pdf](./RevealEstate.pdf)
+
 Python version 3.5.2
 
 * Set up a Python3 virtual enviroment with `conda` or `virtualenv`. Install necessary packages for analysis by running `pip3 install -r requirements.txt -U` or `conda install --yes --file hpc_requirements.txt`.
